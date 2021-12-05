@@ -1,0 +1,41 @@
+map:
+  map_grid_resolution: 0.1 # (unit: m) ## The length of every single grid.
+  add_border_line: false # Add boundary lines recognized by the camera to the map if TRUE.
+  init_direction: [ 0, 1 ] # The direction of the robot head in the map.
+
+robot:
+  lidar_pos_bias: [ 0.0, 0.0 ] # (unit: m) ## The 2-D position bias of Lidar relative to the geometric center of robot.
+  self_block_radius: 0.2  # 0.4 # (unit: m) ## Suppose the robot to be a circle in planform.
+
+planning:
+  default_forward_distance: 0.5 # (unit: m) ## The default distance for the robot going forward from start.
+  default_curve_radius: 1.0 # (unit: m) ## The default radius of the fitting path curve.
+  astar_cost_factors:
+    weight_g: 1.2
+    weight_f: 0.8
+    turn: 1.5
+    move_diag: 1.414
+    weight_distant: 20.0
+    max_distant_grid: 10
+  target_distance_threshold: 0.5 # (unit: m) ## Do not start planning if the distance to target is smaller than this number.
+
+task:
+  start_planning: true # Start the path planning thread if TRUE. Otherwise, wait for the start signal.
+  target_follow: true # There will be a given target position if TRUE. Otherwise, a viable target position need to be deduced according to the known information.
+
+command:
+  default_vel: 1.0 # (unit: m/s) ## The default forward linear velocity of the robot.
+  max_angular_vel: 0.3 # (unit: rad/s) ## The default angular velocity of the robot.
+
+  udp_client:
+    use_udp: true # Transfer the commands over the network if TRUE.
+    ip_addr: "127.0.0.1" # "192.168.3.4"
+    port: 6112
+    send_period: 0.005
+
+lines:
+  k_max: 100
+
+show:
+  lines: false
+  map_image: true
