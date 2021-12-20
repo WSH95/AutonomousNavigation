@@ -113,6 +113,7 @@ target_link_libraries(auto_navigation
         -lm
         modbus)
 
+include_directories(LcmPub/lcm_files/cpp)
 add_executable(monitorOdometer monitorOdometer.cpp ${SRC_FILES})
 target_link_libraries(monitorOdometer
         SingleLidarShare
@@ -121,4 +122,5 @@ target_link_libraries(monitorOdometer
         ${PCL_LIBRARIES}
         ${OpenCV_LIBS}
         -lm
-        modbus)
+        modbus
+        lcm)

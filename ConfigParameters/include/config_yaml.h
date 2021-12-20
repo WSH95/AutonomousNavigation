@@ -1,7 +1,7 @@
 #ifndef __config_yaml_h__
 #define __config_yaml_h__
 
-#define CONFIG_YAML_PATH "/home/wsh/Documents/myCppProj/Autonomous_Navigation_given_line/ConfigParameters/path_planning_config.yaml"
+#define CONFIG_YAML_PATH "/home/wsh/Documents/myCppProj/AutonomousNavigation/ConfigParameters/path_planning_config.yaml"
 // #define LIDAR_PARAM_PATH ""
 // #define LIDAR_START_ICON_PATH ""
 // #define CONFIG_END_ICON_PATH ""

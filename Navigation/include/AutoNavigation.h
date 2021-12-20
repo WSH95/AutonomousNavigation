@@ -69,7 +69,7 @@ public:
 
     void selfLocalizationWOLidar();
 
-    void monitorOdometerData();
+    int monitorOdometerData();
 
 
 private:

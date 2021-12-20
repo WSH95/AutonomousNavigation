@@ -1,0 +1,9 @@
+struct lcm_monitor_odometer
+{
+    float xLidar;
+    float yLidar;
+    float thetaLidar;
+    float xSE;
+    float ySE;
+    float thetaGyro;
+}

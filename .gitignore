@@ -36,4 +36,4 @@ bin/
 Realtime-SingleLidar/build/
 Realtime-SingleLidar/lib/
 Realtime-SingleLidar/*.pcap
-
+data/

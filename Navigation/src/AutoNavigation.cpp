@@ -963,30 +963,6 @@ int AutoNavigation::ConvertArcPath2Bytes(const std::vector<AStar::arcInfo> &path
     return bytes.size();
 }
 
-void AutoNavigation::monitorOdometerData()
-{
-    std::cout << "[1] lidar." << std::endl;
-    std::cout << "[2] theta (from HWT101)." << std::endl;
-    std::cout << "[3] xy (from NUC)." << std::endl;
-    std::cout << "[4] theta + xy." << std::endl;
-    std::cout << "[5] lidar + theta." << std::endl;
-    std::cout << "[6] lidar + xy." << std::endl;
-    std::cout << "[7] lidar + theta + xy." << std::endl;
-    std::cout << std::endl;
-    std::cout << "Please choose a integer number from 1 to 7 indicating what data you want to monitor: ";
-    int num;
-    std::cin >> num;
-    while ((num < 1) || (num > 7))
-    {
-        std::cout << "[Input Error] Please enter the number from 1 to 7." << std::endl;
-        std::cout << "Please choose a integer number from 1 to 7 indicating what data you want to monitor: ";
-        std::cin >> num;
-    }
-    std::cout << std::endl;
-
-
-}
-
 /*void
 AutoNavigation::addLinetoMap(std::vector<std::vector<int>> &map_, float resolution, const vector<cv::Vec4f> &lines_,
                              int origin_x, int origin_y, float k_max)
