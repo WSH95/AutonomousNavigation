@@ -48,6 +48,10 @@ show:
   lines: false
   map_image: true
 
+monitor:
+  use_lcm: true
+  save_txt: false
+
 #route_following:
 #  points: [ [ 1, 0 ], [ 2, 0 ] ]
 #  distance_threshold: 0.8

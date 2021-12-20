@@ -94,13 +94,18 @@ int AutoNavigation::monitorOdometerData()
     }
 
     fileName = fileNameHead + stCurrentTime + ".txt";
+
     ofstream outfile;
-    outfile.open("../data/" + fileName, ios::out | ios::trunc );
+    if (cfg->monitor_save_txt)
+        outfile.open("../data/" + fileName, ios::out | ios::trunc);
+
 
     lcm::LCM lcm("udpm://239.255.12.21:1221?ttl=1");
-    if (!lcm.good())
-        return 1;
-
+    if (cfg->monitor_use_lcm)
+    {
+        if (!lcm.good())
+            return 1;
+    }
     lcm_monitor_odometer monitorOdometer{};
 
     while (true)
@@ -119,14 +124,18 @@ int AutoNavigation::monitorOdometerData()
         monitorOdometer.ySE = tmp_location[1];
         monitorOdometer.thetaGyro = tmp_location[2];
 
-        lcm.publish("monitorOdometer", &monitorOdometer);
+        if (cfg->monitor_use_lcm)
+            lcm.publish("monitorOdometer", &monitorOdometer);
 
-        outfile << monitorOdometer.xLidar << " ";
-        outfile << monitorOdometer.yLidar << " ";
-        outfile << monitorOdometer.thetaLidar << " ";
-        outfile << monitorOdometer.xSE << " ";
-        outfile << monitorOdometer.ySE << " ";
-        outfile << monitorOdometer.thetaGyro << std::endl;
+        if (cfg->monitor_save_txt)
+        {
+            outfile << monitorOdometer.xLidar << " ";
+            outfile << monitorOdometer.yLidar << " ";
+            outfile << monitorOdometer.thetaLidar << " ";
+            outfile << monitorOdometer.xSE << " ";
+            outfile << monitorOdometer.ySE << " ";
+            outfile << monitorOdometer.thetaGyro << std::endl;
+        }
     }
 
     return 0;

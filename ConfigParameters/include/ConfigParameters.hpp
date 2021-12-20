@@ -81,6 +81,10 @@ public:
 //        receive_xy_from_NUC = false;
 //        get_theta_from_HWT101 = false;
         self_localization_mode = Self_localization_mode::only_lidar;
+
+        // monitor
+        monitor_use_lcm = false;
+        monitor_save_txt = false;
     }
 
     explicit ConfigParameters(const std::string &cfgPath)
@@ -134,6 +138,10 @@ public:
         set_follow_task_with_cfg();
 
         set_selfLocalizationMode_with_cfg();
+
+        // monitor
+        monitor_use_lcm = _cfg["monitor"]["use_lcm"].as<bool>();
+        monitor_save_txt = _cfg["monitor"]["save_txt"].as<bool>();
 
 //        receive_xy_from_NUC = _cfg["task"]["route_follow"]["receive_xy_from_NUC"].as<bool>();
 //        get_theta_from_HWT101 = _cfg["task"]["route_follow"]["get_theta_from_HWT101"].as<bool>();
@@ -411,6 +419,9 @@ public:
 //    bool receive_xy_from_NUC;
 //    bool get_theta_from_HWT101;
     Self_localization_mode self_localization_mode;
+
+    bool monitor_use_lcm;
+    bool monitor_save_txt;
 };
 
 #endif //AUTONOMOUS_NAVIGATION_CONFIGPARAMETERS_HPP
