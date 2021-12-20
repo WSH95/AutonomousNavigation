@@ -21,6 +21,8 @@
 #include "UDP.hpp"
 #include "RecvRequest.hpp"
 
+#include "ReadEulerZ_HWT101.hpp"
+
 
 class AutoNavigation
 {
@@ -37,7 +39,15 @@ public:
 
     ~AutoNavigation();
 
+    void init();
+
     void getPathCommand();
+
+    void getPathCommandCin();
+
+    void getPathCommandGivenRoute();
+
+    void calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget);
 
 //    void getPathCommandTest();
 
@@ -57,6 +67,10 @@ public:
 
     static int ConvertArcPath2Bytes(const std::vector<AStar::arcInfo> &path, std::vector<uint8_t> &bytes);
 
+    void selfLocalizationWOLidar();
+
+    void monitorOdometerData();
+
 
 private:
     ConfigParameters *cfg;
@@ -71,6 +85,14 @@ private:
     // loop thread
     LoopFunction loop_planning;
     LoopFunction loop_remoteSend;
+
+    // route following
+    LoopFunction loop_selfLocalizationWOLidar;
+    LockCircleQueue<std::vector<float>, 1> selfLocalizationQueue; // relative to the move body frame.
+    std::vector<std::vector<float>> routePoints; // relative to the initial world frame.
+    float routeTargetThreshold;
+    unsigned long numRoutePoints;
+    int currentRoutePointIndex = 0;
 
     // functional objects
     AStar::ArcPlanning path_planner;
@@ -109,6 +131,16 @@ private:
     uint8_t sendBuf[AUTO_COMMAND_LENGTH];
 
     int count_sendImg = 0;
+
+    ReadEulerZ_HWT101 readThetaFromHWT101;
+
+    /// self-localization using lidar
+    // 里程计信息输出队列
+    Channel<OdometryOut> odometry_out_channel;// true为阻塞传输
+    // 分割聚簇队列
+    Channel<ExtractionOut> featureExtra_out_channel;// true为阻塞传输
+    InitParams setParam;// 声明并初始化设定参数
+    OdometryOut newLidarOdometer;
 };
 
 #endif //AUTONOMOUS_NAVIGATION_AUTONAVIGATION_H

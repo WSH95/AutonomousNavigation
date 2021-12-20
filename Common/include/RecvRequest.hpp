@@ -46,14 +46,19 @@ public:
     {
         return isSending;
     }
+
 private:
     void receiveRequest()
     {
         while (true)
         {
             uint8_t recvBuf[1024];
+            for (int i = 0; i < 1024; i++)
+            {
+                recvBuf[i] = 0;
+            }
             _udp.Receive(recvBuf);
-            auto message = std::string(recvBuf, recvBuf + 13);
+            std::string message = std::string(recvBuf, recvBuf + 13);
             if (message == "Request Image")
             {
                 isSending = true;
@@ -74,6 +79,7 @@ private:
             usleep(100000);
         }
     }
+
     volatile bool isSending;
     Udp _udp;
     std::thread _recvThread;

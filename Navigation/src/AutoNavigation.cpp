@@ -13,54 +13,25 @@
 //string startIconAdrress = LIDAR_START_ICON_PATH;
 //string endIconAdrress = CONFIG_END_ICON_PATH;
 
-constexpr int localPort = 0;
+constexpr int localPort = 6616; // receive base position x y
+constexpr int BASE_POSITION_XY_LENGTH = 15; // head->BaseXY
 
 AutoNavigation::AutoNavigation()
 {
     cfg = new ConfigParameters(CONFIG_YAML_PATH);
-    ifExternCfg = false;
-    _running = false;
-    loop_planning = LoopFunction("planning", 0.1, [this]
-    { getPathCommand(); });
-    loop_remoteSend = LoopFunction("sendRemote", cfg->get_send_period(),
-                                   boost::bind(&AutoNavigation::sendPathCommand, this));
-
-    udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
-    strncpy((char *) sendBuf, "Auto", 5);
+    init();
 }
 
 AutoNavigation::AutoNavigation(ConfigParameters &cfg_)
 {
     cfg = &cfg_;
-    ifExternCfg = true;
-    _running = false;
-    loop_planning = LoopFunction("planning", 0.1, [this]
-    { getPathCommand(); });
-    loop_remoteSend = LoopFunction("sendRemote", cfg->get_send_period(),
-                                   boost::bind(&AutoNavigation::sendPathCommand, this));
-
-    udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
-    strncpy((char *) sendBuf, "Auto", 5);
+    init();
 }
 
 AutoNavigation::AutoNavigation(const std::string &cfg_path_)
 {
     cfg = new ConfigParameters(cfg_path_);
-    ifExternCfg = false;
-    _running = false;
-    loop_planning = LoopFunction("planning", 0.1, [this]
-    { getPathCommand(); });
-    loop_remoteSend = LoopFunction("sendRemote", cfg->get_send_period(),
-                                   boost::bind(&AutoNavigation::sendPathCommand, this));
-
-    udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
-
-//    udp_sendImg.init("127.0.0.1", 6115, 0, 0);
-//    udp_sendImg = RecvRequest();
-
-//    udpTest.init("127.0.0.1", 6113, 0, 0);
-
-    strncpy((char *) sendBuf, "Auto", 5);
+    init();
 }
 
 AutoNavigation::~AutoNavigation()
@@ -69,6 +40,44 @@ AutoNavigation::~AutoNavigation()
     {
         delete cfg;
     }
+}
+
+void AutoNavigation::init()
+{
+    ifExternCfg = false;
+    _running = false;
+
+    if (cfg->follow_task == Follow_task::route_follow)
+    {
+        loop_planning = LoopFunction("route follow", cfg->get_planning_period(), [this]
+        { getPathCommandGivenRoute(); });
+    }
+    else if (cfg->follow_task == Follow_task::target_follow)
+    {
+        loop_planning = LoopFunction("target follow", cfg->get_planning_period(), [this]
+        { getPathCommand(); });
+    }
+    else if (cfg->follow_task == Follow_task::cin_points_follow)
+    {
+        loop_planning = LoopFunction("cin points follow", cfg->get_planning_period(), [this]
+        { getPathCommandCin(); });
+    }
+
+
+    loop_remoteSend = LoopFunction("sendRemote", cfg->get_send_period(),
+                                   boost::bind(&AutoNavigation::sendPathCommand, this));
+
+    udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
+    strncpy((char *) sendBuf, "Auto", 5);
+
+    /// route following
+    loop_selfLocalizationWOLidar = LoopFunction("selfLocalizationWOLidar", cfg->self_localization_WO_lidar_period,
+                                                [this]
+                                                { selfLocalizationWOLidar(); });
+    routePoints = cfg->route_points;
+    routeTargetThreshold = cfg->route_distance_threshold;
+    selfLocalizationQueue.push({0, 0, 0});
+    numRoutePoints = routePoints.size();
 }
 
 //void AutoNavigation::getPathCommandTest()
@@ -144,7 +153,8 @@ void AutoNavigation::getPathCommand()
     int init_len = cfg->get_default_forward_distance_grid();
     double Rd = cfg->get_default_curve_radius_grid();
     double distance_threshold = cfg->get_target_distance_threshold_grid();
-    auto path = path_planner.arc_planning(sourceX, sourceY, targetX, targetY, init_direcX, init_direcY, init_len, Rd, distance_threshold);
+    auto path = path_planner.arc_planning(sourceX, sourceY, targetX, targetY, init_direcX, init_direcY, init_len, Rd,
+                                          distance_threshold);
 
     // print path
 //    AStar::print_path(path_planner.info2vec(path));
@@ -163,6 +173,7 @@ void AutoNavigation::getPathCommand()
 
 
     /***************************************************************Send Image**************************************/
+//    std::cout << cfg->show_map_image << '\t' << udp_sendImg.sendingImg() << endl;
     if (cfg->show_map_image && udp_sendImg.sendingImg())
     {
         //    clock_gettime(CLOCK_MONOTONIC, &startTime);
@@ -226,6 +237,406 @@ void AutoNavigation::getPathCommand()
         std::cout << "send_time: " << timePassed << " ms" << std::endl;
     }
 /*******************************************************************************************************************/
+}
+
+void AutoNavigation::getPathCommandCin()
+{
+    // TEST generate a map
+    /*GridMapTest GridFileReadTest(TEST_MAP_PATH);
+    auto gridMap = GridFileReadTest.GetGridVectorTest();
+    LidarMap tmp;
+    tmp.start_row = 14;
+    tmp.start_column = 69;
+    tmp.target_row = 51;
+    tmp.target_column = 104;
+    tmp.map = gridMap;
+    newMapQueue.push(tmp);*/
+//    vector<cv::Vec4f> tmp_line;
+//    lineCoordQueue.push(tmp_line);
+    /****************************************/
+    float xxx, yyy;
+    std::cout << "input target coordinate: " << std::endl;
+    std::cin >> xxx >> yyy;
+    clock_gettime(CLOCK_MONOTONIC, &startTime);
+    newMapQueue.pop_uptodate(newMap);
+
+    float resolution = cfg->get_map_grid_resolution();
+
+    /*if (cfg->get_add_border_line())
+    {
+        lineCoordQueue.pop_anyway(&newline);
+        addLinetoMap(newMap.map, resolution, newline, newMap.start_row, newMap.start_column, cfg->line_k_max);
+    }*/
+
+    path_planner.setGridMap(newMap.map);
+    path_planner.setRobotSelfRadius(cfg->get_self_block_radius_grid());
+    path_planner.setAstarCost(cfg->astar_cost_factors);
+
+    int sourceX = newMap.start_row + cfg->get_lidar_pos_bias_grid()[0];
+    int sourceY = newMap.start_column + cfg->get_lidar_pos_bias_grid()[1];
+
+//    int targetX = newMap.target_row; // TODO
+//    int targetY = newMap.target_column; // TODO
+
+    int targetX, targetY;
+    targetX = newMap.start_row + (int) (xxx / 0.1);
+    targetY = newMap.start_column + (int) (yyy / 0.1);
+
+    int init_direcX = cfg->get_init_direction()[0];
+    int init_direcY = cfg->get_init_direction()[1];
+    int init_len = cfg->get_default_forward_distance_grid();
+    double Rd = cfg->get_default_curve_radius_grid();
+    double distance_threshold = cfg->get_target_distance_threshold_grid();
+    auto path = path_planner.arc_planning(sourceX, sourceY, targetX, targetY, init_direcX, init_direcY, init_len, Rd,
+                                          distance_threshold);
+
+    // print path
+//    AStar::print_path(path_planner.info2vec(path));
+
+    float vel = cfg->get_default_vel();
+    float w = cfg->get_max_angular_vel();
+    auto cmd = AStar::path2cmd(path, resolution, vel, w);
+
+    //push the path command into queue.
+    CmdQueue.push(cmd);
+
+//    clock_gettime(CLOCK_MONOTONIC, &endTime);
+//    timePassed = (float) ((double) (endTime.tv_nsec - startTime.tv_nsec) / 1.e6 +
+//                          (double) (endTime.tv_sec - startTime.tv_sec) * 1e3);
+//    std::cout << "send_time: " << timePassed << " ms" << std::endl;
+
+
+    /***************************************************************Send Image**************************************/
+//    std::cout << cfg->show_map_image << '\t' << udp_sendImg.sendingImg() << endl;
+    if (cfg->show_map_image && udp_sendImg.sendingImg())
+    {
+        //    clock_gettime(CLOCK_MONOTONIC, &startTime);
+        /************** Send new map info ***************/
+        std::vector<uint8_t> newMapInfoBytes;
+        uint8_t *tmp;
+        uint32_t height = newMap.map.size();
+        uint32_t width = newMap.map[0].size();
+        // head
+        newMapInfoBytes.push_back(0x12);
+        newMapInfoBytes.push_back(0x34);
+        // height bytes
+        tmp = (uint8_t *) (&height);
+        for (int i = 0; i < 4; i++)
+        {
+            newMapInfoBytes.push_back(tmp[i]);
+        }
+        // width bytes
+        tmp = (uint8_t *) (&width);
+        for (int i = 0; i < 4; i++)
+        {
+            newMapInfoBytes.push_back(tmp[i]);
+        }
+//    std::cout << "height: " << (int)height << "  width: " << (int)width << std::endl;
+        udp_sendImg.SendBack(newMapInfoBytes.data(), 10);
+
+        /************** Send path bytes ***************/
+        std::vector<uint8_t> pathBytes;
+        auto path_bytes_len = ConvertArcPath2Bytes(path, pathBytes);
+        if (path_bytes_len)
+            udp_sendImg.SendBack(pathBytes.data(), path_bytes_len);
+
+        /************** Send map bytes ***************/
+        std::vector<uint8_t> tmpMap;
+//    std::vector<uint8_t> tmpMapRow;
+//    tmpMapRow.resize(width);
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                tmpMap.push_back(static_cast<uint8_t>(newMap.map[i][j]));
+//            tmpMapRow[j] = (static_cast<uint8_t>(newMap.map[i][j]));
+            }
+//        udp_sendImg.Send(tmpMapRow.data(), (int)width);
+        }
+
+        // heartbeat signal
+        count_sendImg++;
+        if (!std::fmod(count_sendImg, 1e8))
+            count_sendImg = 0;
+        if (!std::fmod(count_sendImg, 10))
+            tmpMap[0] = 0;
+
+        udp_sendImg.SendBack(tmpMap.data(), tmpMap.size());
+//        usleep(18000);
+//    uint8_t end = 0xf1;
+//    udp_sendImg.Send(&end, 1);
+        clock_gettime(CLOCK_MONOTONIC, &endTime);
+        timePassed = (float) ((double) (endTime.tv_nsec - startTime.tv_nsec) / 1.e6 +
+                              (double) (endTime.tv_sec - startTime.tv_sec) * 1e3);
+        std::cout << "send_time: " << timePassed << " ms" << std::endl;
+    }
+/*******************************************************************************************************************/
+}
+
+void AutoNavigation::getPathCommandGivenRoute()
+{
+
+    // TEST generate a map
+    /*GridMapTest GridFileReadTest(TEST_MAP_PATH);
+    auto gridMap = GridFileReadTest.GetGridVectorTest();
+    LidarMap tmp;
+    tmp.start_row = 14;
+    tmp.start_column = 69;
+    tmp.target_row = 51;
+    tmp.target_column = 104;
+    tmp.map = gridMap;
+    newMapQueue.push(tmp);*/
+//    vector<cv::Vec4f> tmp_line;
+//    lineCoordQueue.push(tmp_line);
+    /****************************************/
+    clock_gettime(CLOCK_MONOTONIC, &startTime);
+    newMapQueue.pop_uptodate(newMap);
+
+    float resolution = cfg->get_map_grid_resolution();
+
+    /*if (cfg->get_add_border_line())
+    {
+        lineCoordQueue.pop_anyway(&newline);
+        addLinetoMap(newMap.map, resolution, newline, newMap.start_row, newMap.start_column, cfg->line_k_max);
+    }*/
+
+    path_planner.setGridMap(newMap.map);
+    path_planner.setRobotSelfRadius(cfg->get_self_block_radius_grid());
+    path_planner.setAstarCost(cfg->astar_cost_factors);
+
+    int sourceX = newMap.start_row + cfg->get_lidar_pos_bias_grid()[0];
+    int sourceY = newMap.start_column + cfg->get_lidar_pos_bias_grid()[1];
+
+//    int targetX = newMap.target_row; // TODO
+//    int targetY = newMap.target_column; // TODO
+
+    float xCurrent, yCurrent, thetaCurrent;
+    float xTargetRelBody = 0;
+    float yTargetRelBody = 0;
+
+    /// update 'xCurrent' 'yCurrent' 'thetaCurrent'
+    if (cfg->self_localization_mode == Self_localization_mode::only_lidar)
+    {
+        odometry_out_channel.pop_uptodate(newLidarOdometer);
+        xCurrent = newLidarOdometer.transformDataSum[3];
+        yCurrent = newLidarOdometer.transformDataSum[4];
+        thetaCurrent = newLidarOdometer.transformDataSum[2];
+    }
+    else
+    {
+        std::vector<float> tmp_location;
+        tmp_location.resize(3);
+        selfLocalizationQueue.pop_anyway(&tmp_location);
+
+        if (cfg->self_localization_mode == Self_localization_mode::no_lidar)
+        {
+            xCurrent = tmp_location[0];
+            yCurrent = tmp_location[1];
+            thetaCurrent = tmp_location[2];
+        }
+        else
+        {
+            odometry_out_channel.pop_uptodate(newLidarOdometer);
+            if (cfg->self_localization_mode == Self_localization_mode::replace_lidarXY)
+            {
+                xCurrent = tmp_location[0];
+                yCurrent = tmp_location[1];
+                thetaCurrent = newLidarOdometer.transformDataSum[2];
+            }
+            else
+            {
+                xCurrent = newLidarOdometer.transformDataSum[3];
+                yCurrent = newLidarOdometer.transformDataSum[4];
+                thetaCurrent = tmp_location[2];
+            }
+        }
+    }
+
+    /// calculate 'xTargetRelBody' 'yTargetRelBody'
+    calTargetGivenRoute(xCurrent, yCurrent, thetaCurrent, xTargetRelBody, yTargetRelBody);
+
+    /// calculate target in gridmap
+    int targetX, targetY;
+    targetX = newMap.start_row - (int) (yTargetRelBody / resolution);
+    targetY = newMap.start_column + (int) (xTargetRelBody / resolution);
+
+    int init_direcX = cfg->get_init_direction()[0];
+    int init_direcY = cfg->get_init_direction()[1];
+    int init_len = cfg->get_default_forward_distance_grid();
+    double Rd = cfg->get_default_curve_radius_grid();
+    double distance_threshold = cfg->get_target_distance_threshold_grid();
+    auto path = path_planner.arc_planning(sourceX, sourceY, targetX, targetY, init_direcX, init_direcY, init_len, Rd,
+                                          distance_threshold);
+
+    // print path
+//    AStar::print_path(path_planner.info2vec(path));
+
+    float vel = cfg->get_default_vel();
+    float w = cfg->get_max_angular_vel();
+    auto cmd = AStar::path2cmd(path, resolution, vel, w);
+
+    //push the path command into queue.
+    CmdQueue.push(cmd);
+
+//    clock_gettime(CLOCK_MONOTONIC, &endTime);
+//    timePassed = (float) ((double) (endTime.tv_nsec - startTime.tv_nsec) / 1.e6 +
+//                          (double) (endTime.tv_sec - startTime.tv_sec) * 1e3);
+//    std::cout << "send_time: " << timePassed << " ms" << std::endl;
+
+
+    /***************************************************************Send Image**************************************/
+//    std::cout << cfg->show_map_image << '\t' << udp_sendImg.sendingImg() << endl;
+    if (cfg->show_map_image && udp_sendImg.sendingImg())
+    {
+        //    clock_gettime(CLOCK_MONOTONIC, &startTime);
+        /************** Send new map info ***************/
+        std::vector<uint8_t> newMapInfoBytes;
+        uint8_t *tmp;
+        uint32_t height = newMap.map.size();
+        uint32_t width = newMap.map[0].size();
+        // head
+        newMapInfoBytes.push_back(0x12);
+        newMapInfoBytes.push_back(0x34);
+        // height bytes
+        tmp = (uint8_t *) (&height);
+        for (int i = 0; i < 4; i++)
+        {
+            newMapInfoBytes.push_back(tmp[i]);
+        }
+        // width bytes
+        tmp = (uint8_t *) (&width);
+        for (int i = 0; i < 4; i++)
+        {
+            newMapInfoBytes.push_back(tmp[i]);
+        }
+//    std::cout << "height: " << (int)height << "  width: " << (int)width << std::endl;
+        udp_sendImg.SendBack(newMapInfoBytes.data(), 10);
+
+        /************** Send path bytes ***************/
+        std::vector<uint8_t> pathBytes;
+        auto path_bytes_len = ConvertArcPath2Bytes(path, pathBytes);
+        if (path_bytes_len)
+            udp_sendImg.SendBack(pathBytes.data(), path_bytes_len);
+
+        /************** Send map bytes ***************/
+        std::vector<uint8_t> tmpMap;
+//    std::vector<uint8_t> tmpMapRow;
+//    tmpMapRow.resize(width);
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                tmpMap.push_back(static_cast<uint8_t>(newMap.map[i][j]));
+//            tmpMapRow[j] = (static_cast<uint8_t>(newMap.map[i][j]));
+            }
+//        udp_sendImg.Send(tmpMapRow.data(), (int)width);
+        }
+
+        // heartbeat signal
+        count_sendImg++;
+        if (!std::fmod(count_sendImg, 1e8))
+            count_sendImg = 0;
+        if (!std::fmod(count_sendImg, 10))
+            tmpMap[0] = 0;
+
+        udp_sendImg.SendBack(tmpMap.data(), tmpMap.size());
+//        usleep(18000);
+//    uint8_t end = 0xf1;
+//    udp_sendImg.Send(&end, 1);
+        clock_gettime(CLOCK_MONOTONIC, &endTime);
+        timePassed = (float) ((double) (endTime.tv_nsec - startTime.tv_nsec) / 1.e6 +
+                              (double) (endTime.tv_sec - startTime.tv_sec) * 1e3);
+        std::cout << "send_time: " << timePassed << " ms" << std::endl;
+    }
+/*******************************************************************************************************************/
+}
+
+void AutoNavigation::selfLocalizationWOLidar()
+{
+    float xBody = 0, yBody = 0;
+    float theta = 0;
+
+    if (cfg->self_localization_mode != Self_localization_mode::replace_lidarTheta)
+    {
+        /// receive body position XY from NUC.
+        uint8_t recvBuf[1024];
+        for (unsigned char &elem: recvBuf)
+            elem = 0;
+        int len = udp.Receive(recvBuf);
+        if (len == BASE_POSITION_XY_LENGTH)
+        {
+            auto head = std::string(recvBuf, recvBuf + 6);
+            if (head == "BaseXY")
+            {
+                xBody = SocketTools::ConvertByte2Float((unsigned char *) (recvBuf + 7));
+                yBody = SocketTools::ConvertByte2Float((unsigned char *) (recvBuf + 11));
+            }
+            else
+            {
+                std::cout << "[BaseXY] Head received error!" << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "[BaseXY] Length received error!" << " (" << len << ")" << std::endl;
+            return;
+        }
+    }
+
+    if (cfg->self_localization_mode != Self_localization_mode::replace_lidarXY)
+    {
+        /// read Z-axis euler angle.
+        theta = readThetaFromHWT101.readZ_rad();
+    }
+
+    selfLocalizationQueue.push({xBody, yBody, theta});
+}
+
+void AutoNavigation::calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget)
+{
+    if (numRoutePoints == 0)
+    {
+        xTarget = 0;
+        yTarget = 0;
+        return;
+    }
+    else
+    {
+        while (currentRoutePointIndex < (numRoutePoints - 1)) // not the last one.
+        {
+            float xDelta = routePoints[currentRoutePointIndex][0] - xBody_;
+            float yDelta = routePoints[currentRoutePointIndex][1] - yBody_;
+            if (sqrt(pow(xDelta, 2) + pow(yDelta, 2)) > routeTargetThreshold)
+            {
+                xTarget = cos(theta_) * xDelta + sin(theta_) * yDelta;
+                yTarget = -sin(theta_) * xDelta + cos(theta_) * yDelta;
+                std::cout << "xTmp: " << xTarget << std::endl;
+                std::cout << "yTmp: " << yTarget << std::endl;
+                return;
+            }
+            else
+            {
+                currentRoutePointIndex++;
+                continue;
+            }
+        }
+
+        // the last one
+        float xDelta = routePoints[currentRoutePointIndex][0] - xBody_;
+        float yDelta = routePoints[currentRoutePointIndex][1] - yBody_;
+        if (sqrt(pow(xDelta, 2) + pow(yDelta, 2)) > cfg->get_target_distance_threshold())
+        {
+            xTarget = cos(theta_) * xDelta + sin(theta_) * yDelta;
+            yTarget = -sin(theta_) * xDelta + cos(theta_) * yDelta;
+        }
+        else
+        {
+            xTarget = 0;
+            yTarget = 0;
+        }
+
+        return;
+    }
 }
 
 void AutoNavigation::sendPathCommand()
@@ -416,9 +827,30 @@ void AutoNavigation::start()
     th_lidar = std::thread(MutLidar, ref(Param), ref(newMapQueue), ref(_running), "");
     std::cout << "[Task-Lidar] Start running!" << std::endl;*/
 
-    // start single lidar task
-    th_lidar = std::thread(LidarMapThreadFun, ref(_running), ref(newMapQueue));
-    std::cout << "[Task-Lidar] Start running!" << std::endl;
+    if (cfg->follow_task == Follow_task::target_follow)
+    {
+        // start single lidar target-follow task
+        getParameter(setParam);
+        th_lidar = std::thread(LidarMapThreadFun, ref(_running), ref(setParam), ref(newMapQueue));
+        std::cout << "[Task-Lidar] Start running target-follow task!" << std::endl;
+    }
+    else if (cfg->follow_task == Follow_task::route_follow)
+    {
+        // start single lidar route-follow task
+        getParameter(setParam);
+        th_lidar = std::thread(AutonomousNav, ref(_running), ref(setParam), ref(newMapQueue), ref(odometry_out_channel),
+                               ref(featureExtra_out_channel));
+        std::cout << "[Task-Lidar] Start running route-follow task!" << std::endl;
+    }
+    else if (cfg->follow_task == Follow_task::cin_points_follow)
+    {
+        // start single lidar cin_points-follow task
+        getParameter(setParam);
+        th_lidar = std::thread(AutonomousNav, ref(_running), ref(setParam), ref(newMapQueue), ref(odometry_out_channel),
+                               ref(featureExtra_out_channel));
+        std::cout << "[Task-Lidar] Start running cin_points-follow task!" << std::endl;
+    }
+
 
     /*if (cfg->get_add_border_line())
     {
@@ -433,6 +865,15 @@ void AutoNavigation::start()
 
     // start sending command to remote
     loop_remoteSend.start();
+
+    // start get the update target. receive body position XY from NUC. receive Z-axis euler angle from sensor. calculate the point's relative coordinate to body.
+    if ((cfg->follow_task == Follow_task::route_follow) &&
+        (cfg->self_localization_mode != Self_localization_mode::only_lidar))
+    {
+        if (cfg->self_localization_mode != Self_localization_mode::replace_lidarXY)
+            readThetaFromHWT101.setup();
+        loop_selfLocalizationWOLidar.start();
+    }
 
     std::cout << "ALL TASKS STARTED!" << std::endl;
 }
@@ -520,6 +961,30 @@ int AutoNavigation::ConvertArcPath2Bytes(const std::vector<AStar::arcInfo> &path
     }
 
     return bytes.size();
+}
+
+void AutoNavigation::monitorOdometerData()
+{
+    std::cout << "[1] lidar." << std::endl;
+    std::cout << "[2] theta (from HWT101)." << std::endl;
+    std::cout << "[3] xy (from NUC)." << std::endl;
+    std::cout << "[4] theta + xy." << std::endl;
+    std::cout << "[5] lidar + theta." << std::endl;
+    std::cout << "[6] lidar + xy." << std::endl;
+    std::cout << "[7] lidar + theta + xy." << std::endl;
+    std::cout << std::endl;
+    std::cout << "Please choose a integer number from 1 to 7 indicating what data you want to monitor: ";
+    int num;
+    std::cin >> num;
+    while ((num < 1) || (num > 7))
+    {
+        std::cout << "[Input Error] Please enter the number from 1 to 7." << std::endl;
+        std::cout << "Please choose a integer number from 1 to 7 indicating what data you want to monitor: ";
+        std::cin >> num;
+    }
+    std::cout << std::endl;
+
+
 }
 
 /*void

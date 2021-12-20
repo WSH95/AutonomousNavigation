@@ -20,6 +20,8 @@
 //#include "RecvPlanningUdp.hpp"
 #include "UDP.hpp"
 
+#include "ReadEulerZ_HWT101.hpp"
+
 
 using namespace std;
 
@@ -42,9 +44,22 @@ int main()
 //    struct timeval start, end;
 //    double diff;
 
-    AutoNavigation na(CONFIG_YAML_PATH);
+    AutoNavigation na(CONFIG_YAML_PATH); /// need************************************
 //    na.getPathCommand();
-    na.start();
+    na.start(); /// need************************************
+
+    /*/// HWT101CT
+    ReadEulerZ_HWT101 zz;
+//    zz.resetSensor();
+//    zz.unlock();
+//    zz.setBaudRate(115200);
+    while (true)
+    {
+        auto angle = zz.readZ_rad();
+//        std::cout << "angle: " << angle << std::endl;
+        sleep(1);
+    }*/
+
 
 //    gettimeofday(&start, NULL);
 //

@@ -1,17 +1,16 @@
 #include "lidarMapManage.h"
 
 
-void initRSLidar16Param(robosense::rslidar::ST_Param &lidarParam, InitParams &setParam){
-    lidarParam.lidar = robosense::rslidar::RS_Type_Lidar16;
+void initRSLidar16Param(robosense::rslidar::ST_Param &lidarParam){
+    lidarParam.lidar = robosense::rslidar::RS_Type_Lidar32;
     lidarParam.resolution = robosense::rslidar::RS_Resolution_5mm;
     //lidarParam.intensity = robosense::rslidar::RS_INTENSITY_EXTERN;
     lidarParam.echo = robosense::rslidar::RS_Echo_Last;//RS_Echo_Strongest;
     //lidarParam.echo = robosense::rslidar::RS_Echo_Dual;
     //lidarParam.echo = robosense::rslidar::RS_Echo_Last;
-    //TODO: 使用setParam初始化这些参数
     lidarParam.cut_angle = 0.1f;
     lidarParam.max_distance = 30.0f;
-    lidarParam.min_distance = 0.4f;
+    lidarParam.min_distance = 0.2f;
     lidarParam.start_angle = 0.0f;//0.0f;
     lidarParam.end_angle = 360.0f;//360.0f;
     //param.cali_path = "./RS16";
@@ -109,7 +108,6 @@ bool getLidarFrame(vector<PointCloud_I>& receiver, robosense::rslidar::RSLidarDe
     }
 
 }
-
 
 void listenRSLidar(robosense::rslidar::RSLidarDecoder<PointXYZITS> &decoder, robosense::rslidar_input::Input &InputObj,
               PointCloudQueue<vector<PointCloud_I>,double,long long>& PC_I_Ptr_queue, int csanIDTotal,

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(RealtimeLidar)
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2" )
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/../bin)
 #set(CMAKE_BUILD_TYPE "release")
 set(CMAKE_BUILD_TYPE "Debug")
@@ -16,9 +16,9 @@ find_package(Eigen3 REQUIRED)
 include_directories(${EIGEN3_INCLUDE_DIR})
 
 find_package(PCL REQUIRED)
-include_directories( ${PCL_INCLUDE_DIRS})
+include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
-add_definitions( ${PCL_DEFINITIONS} )
+add_definitions(${PCL_DEFINITIONS})
 
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
@@ -53,7 +53,6 @@ target_link_libraries(PointCloudManage
 install(TARGETS grid_manage
         LIBRARY DESTINATION ${PROJECT_BINARY_DIR}/../lib)
 ]]
-
 
 
 #####################################  IMU库  ##############################################
@@ -92,7 +91,9 @@ set(VISUAL_FILES visualization/visualize.cpp)
 set(OBJDET_FILES objDetect/objDetect.cpp)
 set(GRIDMAP_FILES gridMap/gridMapManage.cpp gridMap/gridMap.cpp)
 set(GROUNDCALI_FILES groundPlaneCalibration/groundPlaneCali.cpp)
-#[[add_executable(main ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES})
+set(LOAM_FILES lidarOdom/pointCloudSeg.cpp lidarOdom/featureExtraction.cpp lidarOdom/lidarOdometry.cpp)
+#[[add_executable(main ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} 
+        ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES} ${LOAM_FILES})
 target_link_libraries(main        
         pcap
         ${PCL_LIBRARIES}
@@ -104,7 +105,7 @@ target_link_libraries(main
 )]]
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-add_library(SingleLidarShare SHARED ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES})
+add_library(SingleLidarShare SHARED ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES} ${LOAM_FILES})
 install(TARGETS SingleLidarShare
         LIBRARY DESTINATION lib)
 

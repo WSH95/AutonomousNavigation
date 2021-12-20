@@ -49,14 +49,28 @@ public:
         }
         return (fd >= 0);
     }
+
+    static float ConvertByte2Float(unsigned char *pByte)
+    {
+        float floatVariable;
+        unsigned char i;
+        void *pf;
+        pf = &floatVariable;
+
+        for (i = 0; i < 4; i++)
+        {
+            *((unsigned char *) pf + i) = *(pByte + i);
+        }
+
+        return floatVariable;
+    }
 };
 
 
 class Udp : public SocketTools
 {
 public:
-    Udp() : SocketTools()
-    {}
+    Udp() : SocketTools() {}
 
     ~Udp() = default;
 
@@ -82,11 +96,11 @@ public:
             tmpAddr = &targetAddr;
 
         // 设置超时
-        if (fd != 0)
+        if (period != 0)
         {
             struct timeval tv;
-            tv.tv_sec = (long int) fd;
-            tv.tv_usec = (long int) (1e6 * std::fmod(fd, 1.f));
+            tv.tv_sec = (long int) period;
+            tv.tv_usec = (long int) (1e6 * std::fmod(period, 1.f));
             if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *) &tv, sizeof(struct timeval)) < 0)
             {
                 perror("Timeout setting error!\n");

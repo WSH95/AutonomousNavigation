@@ -5,12 +5,29 @@
 #ifndef AUTONOMOUS_NAVIGATION_CONFIGPARAMETERS_HPP
 #define AUTONOMOUS_NAVIGATION_CONFIGPARAMETERS_HPP
 
+#include <iostream>
 #include "yaml-cpp/yaml.h"
 #include <string>
 #include <vector>
 #include <mutex>
 #include <atomic>
 #include "AStar.hpp"
+
+enum class Follow_task : int
+{
+    disable = 0,
+    target_follow,
+    route_follow,
+    cin_points_follow
+};
+
+enum class Self_localization_mode : int
+{
+    only_lidar = 0,
+    no_lidar,
+    replace_lidarXY,
+    replace_lidarTheta
+};
 
 class ConfigParameters
 {
@@ -27,15 +44,19 @@ public:
         _planning_cfg.default_forward_distance = 0.0;
         _planning_cfg.default_curve_radius = 0.0;
         _planning_cfg.target_distance_threshold = 0.0;
+        _planning_cfg.planning_period = 0.1;
 
         _task_cfg.start_planning = false;
         _task_cfg.target_follow = false;
+        _task_cfg.route_follow = false;
+        _task_cfg.cin_points_follow = false;
 
         _command_cfg.default_vel = 0.0;
         _command_cfg.max_angular_vel = 0.0;
         _command_cfg.udp_client.use_udp = false;
         _command_cfg.udp_client.ip_addr = "0.0.0.0";
         _command_cfg.udp_client.port = 0;
+        _command_cfg.udp_client.send_period = 0;
 
         // public
         show_lines = false;
@@ -51,6 +72,15 @@ public:
         astar_cost_factors.weight_distant = 20.0;
         astar_cost_factors.max_distant_grid = 10;
 
+        follow_task = Follow_task::disable;
+        // route follow
+        route_points.push_back({0, 0});
+        route_distance_threshold = 0.0;
+//        self_localization_with_lidar = false;
+        self_localization_WO_lidar_period = 0;
+//        receive_xy_from_NUC = false;
+//        get_theta_from_HWT101 = false;
+        self_localization_mode = Self_localization_mode::only_lidar;
     }
 
     explicit ConfigParameters(const std::string &cfgPath)
@@ -67,9 +97,12 @@ public:
         _planning_cfg.default_forward_distance = _cfg["planning"]["default_forward_distance"].as<float>();
         _planning_cfg.default_curve_radius = _cfg["planning"]["default_curve_radius"].as<float>();
         _planning_cfg.target_distance_threshold = _cfg["planning"]["target_distance_threshold"].as<float>();
+        _planning_cfg.planning_period = _cfg["planning"]["planning_period"].as<float>();
 
         _task_cfg.start_planning = _cfg["task"]["start_planning"].as<bool>();
         _task_cfg.target_follow = _cfg["task"]["target_follow"].as<bool>();
+        _task_cfg.route_follow = _cfg["task"]["route_follow"]["enable"].as<bool>();
+        _task_cfg.cin_points_follow = _cfg["task"]["cin_points_follow"].as<bool>();
 
         _command_cfg.default_vel = _cfg["command"]["default_vel"].as<float>();
         _command_cfg.max_angular_vel = _cfg["command"]["max_angular_vel"].as<float>();
@@ -84,13 +117,26 @@ public:
 
         show_map_image = _cfg["show"]["map_image"].as<bool>();
 
-        //public
+        // public
         astar_cost_factors.weight_g = _cfg["planning"]["astar_cost_factors"]["weight_g"].as<float>();
         astar_cost_factors.weight_f = _cfg["planning"]["astar_cost_factors"]["weight_f"].as<float>();
         astar_cost_factors.turn = _cfg["planning"]["astar_cost_factors"]["turn"].as<float>();
         astar_cost_factors.move_diag = _cfg["planning"]["astar_cost_factors"]["move_diag"].as<float>();
         astar_cost_factors.weight_distant = _cfg["planning"]["astar_cost_factors"]["weight_distant"].as<float>();
         astar_cost_factors.max_distant_grid = _cfg["planning"]["astar_cost_factors"]["max_distant_grid"].as<int>();
+
+        // route follow
+        route_points = _cfg["task"]["route_follow"]["points"].as<std::vector<std::vector<float>>>();
+        route_distance_threshold = _cfg["task"]["route_follow"]["distance_threshold"].as<float>();
+//        self_localization_with_lidar = _cfg["task"]["route_follow"]["self_localization_with_lidar"].as<bool>();
+        self_localization_WO_lidar_period = _cfg["task"]["route_follow"]["self_localization_WO_lidar_period"].as<float>();
+
+        set_follow_task_with_cfg();
+
+        set_selfLocalizationMode_with_cfg();
+
+//        receive_xy_from_NUC = _cfg["task"]["route_follow"]["receive_xy_from_NUC"].as<bool>();
+//        get_theta_from_HWT101 = _cfg["task"]["route_follow"]["get_theta_from_HWT101"].as<bool>();
     }
 
     ~ConfigParameters() = default;
@@ -160,6 +206,16 @@ public:
         return _planning_cfg.target_distance_threshold / _map_cfg.map_grid_resolution;
     }
 
+    float get_target_distance_threshold()
+    {
+        return _planning_cfg.target_distance_threshold;
+    }
+
+    float get_planning_period()
+    {
+        return _planning_cfg.planning_period;
+    }
+
     bool get_start_planning() const
     {
         return _task_cfg.start_planning;
@@ -168,6 +224,11 @@ public:
     bool get_target_follow() const
     {
         return _task_cfg.target_follow;
+    }
+
+    bool get_route_follow() const
+    {
+        return _task_cfg.route_follow;
     }
 
     float get_default_vel()
@@ -246,6 +307,11 @@ public:
         _command_cfg.udp_client.use_udp.exchange(state_);
     }
 
+    void set_follow_task(Follow_task task_)
+    {
+        follow_task = task_;
+    }
+
 private:
     YAML::Node _cfg;
 
@@ -263,6 +329,7 @@ private:
 
     struct planning_parameters
     {
+        float planning_period;
         float default_forward_distance;
         float default_curve_radius;
         float target_distance_threshold;
@@ -271,6 +338,8 @@ private:
     {
         std::atomic<bool> start_planning;
         std::atomic<bool> target_follow;
+        std::atomic<bool> route_follow;
+        std::atomic<bool> cin_points_follow;
     };
     struct command_parameters
     {
@@ -294,6 +363,38 @@ private:
 
     std::mutex _lock_default_forward_distance, _lock_default_curve_radius, _lock_default_vel, _lock_max_angular_vel;
 
+    void set_follow_task_with_cfg()
+    {
+        if (_task_cfg.target_follow && (!_task_cfg.route_follow) && (!_task_cfg.cin_points_follow))
+            follow_task = Follow_task::target_follow;
+        else if ((!_task_cfg.target_follow) && _task_cfg.route_follow && (!_task_cfg.cin_points_follow))
+            follow_task = Follow_task::route_follow;
+        else if ((!_task_cfg.target_follow) && (!_task_cfg.route_follow) && _task_cfg.cin_points_follow)
+            follow_task = Follow_task::cin_points_follow;
+        else if ((!_task_cfg.target_follow) && (!_task_cfg.route_follow) && (!_task_cfg.cin_points_follow))
+            follow_task = Follow_task::disable;
+        else
+        {
+            std::cout
+                    << "[ERROR] Following task config wrong in path_planning_config.yaml, only one follow_task can be true"
+                    << std::endl;
+            exit(-1);
+        }
+    }
+
+    void set_selfLocalizationMode_with_cfg()
+    {
+        int mode = _cfg["task"]["route_follow"]["self_localization_mode"].as<int>();
+        if (mode >= 0 && mode < 4)
+            self_localization_mode = static_cast<Self_localization_mode>(mode);
+        else
+        {
+            std::cout << "[ERROR] Self-localization mode config wrong in path_planning_config.yaml, (0 1 2 3)"
+                      << std::endl;
+            exit(-1);
+        }
+    }
+
 public:
     bool show_lines;
     float line_k_max;
@@ -301,6 +402,15 @@ public:
     bool show_map_image;
 
     AStar::Planning::astar_cost astar_cost_factors;
+
+    Follow_task follow_task;
+    std::vector<std::vector<float>> route_points;
+    float route_distance_threshold;
+//    bool self_localization_with_lidar;
+    float self_localization_WO_lidar_period;
+//    bool receive_xy_from_NUC;
+//    bool get_theta_from_HWT101;
+    Self_localization_mode self_localization_mode;
 };
 
 #endif //AUTONOMOUS_NAVIGATION_CONFIGPARAMETERS_HPP

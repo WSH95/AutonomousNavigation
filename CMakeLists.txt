@@ -88,6 +88,9 @@ file(GLOB_RECURSE SRC_FILES
         )
 message("SRC_FILES: ${SRC_FILES}")
 
+# HWT101CT
+include_directories(HWT101)
+
 add_executable(auto_navigation main.cpp ${SRC_FILES})
 
 #[[if (LINK_SHARED_ZED)
@@ -107,4 +110,15 @@ target_link_libraries(auto_navigation
 #        ${ZED_LIBS}
         ${PCL_LIBRARIES}
         ${OpenCV_LIBS}
-        -lm)
+        -lm
+        modbus)
+
+add_executable(monitorOdometer monitorOdometer.cpp ${SRC_FILES})
+target_link_libraries(monitorOdometer
+        SingleLidarShare
+        ${YAML_CPP_LIBRARIES}
+        pcap
+        ${PCL_LIBRARIES}
+        ${OpenCV_LIBS}
+        -lm
+        modbus)

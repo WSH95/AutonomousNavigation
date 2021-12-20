@@ -707,7 +707,7 @@ CoordinateList Planning::findPath(Vec2d source, Vec2d target, Vec2d init_directi
     auto target_ = target;
     if (detectCollision(source_))
     {
-        std::cout << "Source is invalid" << endl;
+//        std::cout << "Source is invalid" << endl;
         if (findNearFreePoint(source_, 15))
         {
 //            std::cout << "New Source: ( " << source_.x << ", " << source_.y << " )" << std::endl;
@@ -769,7 +769,7 @@ CoordinateList Planning::findPath(Vec2d source, Vec2d target, Vec2d init_directi
 
         if (current->coordinate == target_)
         {
-            std::cout << "The path is found successfully, as follows." << endl;
+//            std::cout << "The path is found successfully, as follows." << endl;
             break;
         }
 

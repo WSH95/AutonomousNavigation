@@ -1,15 +1,17 @@
 #lidar参数
 num_vertical_scans: 16				      # 雷达线数（总的scan层数：16
 num_horizontal_scans: 1800			    # 雷达一个scan返回的点个数：1800
-ground_scan_index: 7				        # 能扫描的地面的scan层数：0-7
 vertical_angle_bottom: -15          # 雷达竖直扫描角度上限 单位：degrees
 vertical_angle_top: 15              # 雷达竖直扫描角度下限 单位：degrees
 sensor_mount_angle: 0               # 雷达安装角度（pitch角）单位：degrees
 scan_period: 0.1                    # 一帧数据采集时间 单位：seconds		
+# 代码逻辑控制参数
+pattern_select_switch: 1            # 0是人员跟随，1是自主导航
 
 #单雷达人员跟踪与自主避障算法参数
-visualize: false
-pcapAddr: '' # ../Realtime-SingleLidar/trees_with_object.pcap
+visualize: true
+#pcapAddr: '/home/ljh/lidarData/forest/nanyilou/trees_with_object_lidar16.pcap'
+pcapAddr: '' # /home/ljh/lidarData/lidarOdometry/odom3.pcap
 
 #地面分割算法参数
 n_threads: 4            # 使用线程数量
@@ -18,7 +20,9 @@ r_max: 10               # maximum point distance.
 n_bins: 60             # number of radial bins.
 n_segments: 360         # number of radial segments.
 max_dist_to_line: 0.05  # maximum vertical distance of point to line to be considered ground.
-sensor_height: 0.503      # sensor height above ground.
+#sensor_height: 0.503      # sensor height above ground.
+sensor_height: 1.05
+#sensor_height: 0.85
 max_slope: 0.3          # maximum slope of a ground line.
 max_fit_error: 0.05     # maximum error of a point during line fit.
 long_threshold: 1.0     # distance between points after which they are considered far from each other.
@@ -35,7 +39,7 @@ groundCali_deg_threshold: 2     # 估计地面偏离的角度大于阈值时，�
 
 # 人员跟随算法参数
 voxel_leaf_size: 0.035        # 体素滤波的网格大小值
-intensity_threshold: 196        # 雷达反射强度阈值
+intensity_threshold: 220        # 雷达反射强度阈值
 r_reflectPoint_search: 0.1       # 误差点搜索的范围
 n_reflectPoint_closest: 4        # 近邻误差点的数量
 std_target_size: 0.35355        # 对角线长度
@@ -47,7 +51,7 @@ max_y: 6.0
 min_y: -6.0
 max_z: 1.0
 min_z: -0.503                     # min_z是雷达离地面高度
-n_gridmap_x: 128
-n_gridmap_y: 128
+n_gridmap_x: 240
+n_gridmap_y: 240
 grid_scale: 0.1
 n_pixel_per_grid: 2     # 每个栅格一边占据的像素个数
