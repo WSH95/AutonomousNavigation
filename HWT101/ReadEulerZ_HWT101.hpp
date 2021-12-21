@@ -84,12 +84,12 @@ public:
         if (len == 3)
         {
             float rad_z = (int16_t) tmp_read_buffer[2] / 32768.0 * 3.1415926;
-            std::cout << "angle: " << rad_z << " rad" << std::endl;
+//            std::cout << "angle: " << rad_z << " rad" << std::endl;
             return rad_z;
         }
         else
         {
-            printf("[HWT101] read error: %s\n", modbus_strerror(errno));
+//            printf("[HWT101] read error: %s\n", modbus_strerror(errno));
             return -12345;
         }
     }

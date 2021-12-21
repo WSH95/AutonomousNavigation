@@ -52,6 +52,7 @@ int AutoNavigation::monitorOdometerData()
             if (num == 2)
             {
                 cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta;
+                readThetaFromHWT101.setup();
                 fileNameHead = "theta_";
             }
             else if (num == 3)
@@ -62,6 +63,7 @@ int AutoNavigation::monitorOdometerData()
             else
             {
                 cfg->self_localization_mode = Self_localization_mode::no_lidar;
+                readThetaFromHWT101.setup();
                 fileNameHead = "theta+xy_";
             }
         }
@@ -71,6 +73,7 @@ int AutoNavigation::monitorOdometerData()
             if (num == 5)
             {
                 cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta;
+                readThetaFromHWT101.setup();
                 fileNameHead = "lidar+theta_";
             }
             else if (num == 6)
@@ -81,6 +84,7 @@ int AutoNavigation::monitorOdometerData()
             else
             {
                 cfg->self_localization_mode = Self_localization_mode::no_lidar;
+                readThetaFromHWT101.setup();
                 fileNameHead = "lidar+theta+xy_";
             }
 
@@ -100,7 +104,7 @@ int AutoNavigation::monitorOdometerData()
         outfile.open("../data/" + fileName, ios::out | ios::trunc);
 
 
-    lcm::LCM lcm("udpm://239.255.12.21:1221?ttl=1");
+    lcm::LCM lcm("udpm://239.255.12.21:1221?ttl=255");
     if (cfg->monitor_use_lcm)
     {
         if (!lcm.good())

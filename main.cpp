@@ -48,15 +48,15 @@ int main()
 //    na.getPathCommand();
     na.start(); /// need************************************
 
-    /*/// HWT101CT
-    ReadEulerZ_HWT101 zz;
-//    zz.resetSensor();
+    /// HWT101CT
+    /*ReadEulerZ_HWT101 zz;
+    zz.setup();
 //    zz.unlock();
-//    zz.setBaudRate(115200);
+//    zz.setBaudRate(921600);
     while (true)
     {
         auto angle = zz.readZ_rad();
-//        std::cout << "angle: " << angle << std::endl;
+        std::cout << "angle: " << angle << std::endl;
         sleep(1);
     }*/
 

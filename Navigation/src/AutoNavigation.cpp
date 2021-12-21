@@ -554,7 +554,7 @@ void AutoNavigation::getPathCommandGivenRoute()
 void AutoNavigation::selfLocalizationWOLidar()
 {
     float xBody = 0, yBody = 0;
-    float theta = 0;
+    float tmpTheta = 0;
 
     if (cfg->self_localization_mode != Self_localization_mode::replace_lidarTheta)
     {
@@ -586,10 +586,13 @@ void AutoNavigation::selfLocalizationWOLidar()
     if (cfg->self_localization_mode != Self_localization_mode::replace_lidarXY)
     {
         /// read Z-axis euler angle.
-        theta = readThetaFromHWT101.readZ_rad();
+        tmpTheta = readThetaFromHWT101.readZ_rad();
+        // TODO read error
+        if (tmpTheta != -12345)
+            thetaHWT = tmpTheta;
     }
 
-    selfLocalizationQueue.push({xBody, yBody, theta});
+    selfLocalizationQueue.push({xBody, yBody, thetaHWT});
 }
 
 void AutoNavigation::calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget)
