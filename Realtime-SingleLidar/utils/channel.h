@@ -21,7 +21,7 @@ struct ExtractionOut{
     pcl::PointCloud<PointT_I> cornerPointsLessSharp;
     pcl::PointCloud<PointT_I> surfPointsFlat;
     pcl::PointCloud<PointT_I> surfPointsLessFlat;
-    
+
     ExtractionOut& operator=(const ExtractionOut& s){
         this->cornerPointsSharp = s.cornerPointsSharp;
         this->cornerPointsLessSharp = s.cornerPointsLessSharp;

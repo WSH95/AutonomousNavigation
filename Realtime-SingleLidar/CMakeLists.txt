@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5.0)
 project(RealtimeLidar)
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -O0")
 #set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/../bin)
 #set(CMAKE_BUILD_TYPE "release")
 set(CMAKE_BUILD_TYPE "Debug")
@@ -92,9 +92,9 @@ set(OBJDET_FILES objDetect/objDetect.cpp)
 set(GRIDMAP_FILES gridMap/gridMapManage.cpp gridMap/gridMap.cpp)
 set(GROUNDCALI_FILES groundPlaneCalibration/groundPlaneCali.cpp)
 set(LOAM_FILES lidarOdom/pointCloudSeg.cpp lidarOdom/featureExtraction.cpp lidarOdom/lidarOdometry.cpp)
-#[[add_executable(main ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} 
+add_executable(lidar ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES}
         ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES} ${LOAM_FILES})
-target_link_libraries(main        
+target_link_libraries(lidar
         pcap
         ${PCL_LIBRARIES}
         ${OpenCV_LIBS}
@@ -102,7 +102,7 @@ target_link_libraries(main
         ${Eigen_LIBRARIES}
         -lpthread
         -lm
-)]]
+)
 
 set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 add_library(SingleLidarShare SHARED ${SOURCE_FILES} ${GROUNDSEG_FILES} ${PARAM_FILES} ${VISUAL_FILES} ${OBJDET_FILES} ${GRIDMAP_FILES} ${GROUNDCALI_FILES} ${LOAM_FILES})

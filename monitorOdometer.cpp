@@ -36,6 +36,7 @@ int AutoNavigation::monitorOdometerData()
     std::string fileNameHead, fileName;
 
     bool useLidar = false;
+    _running = true;
 
     if (num == 1) // only need lidar thread
     {
@@ -140,6 +141,9 @@ int AutoNavigation::monitorOdometerData()
             outfile << monitorOdometer.ySE << " ";
             outfile << monitorOdometer.thetaGyro << std::endl;
         }
+
+        if (!useLidar)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
     return 0;

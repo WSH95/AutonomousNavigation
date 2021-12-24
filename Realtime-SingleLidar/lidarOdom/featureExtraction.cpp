@@ -53,7 +53,7 @@ void FeatureExtraction::coordinateTransform(){
 // 计算平滑程度
 void FeatureExtraction::calculateSmoothness(){
     int cloudSize = segmentedCloud_->points.size();
-    for(int i=0; i<cloudSize-5; i++){
+    for(int i=5; i<cloudSize-5; i++){
         float diffRange = segMsg_.segmentedCloudRange[i-5] + segMsg_.segmentedCloudRange[i-4]
                         + segMsg_.segmentedCloudRange[i-3] + segMsg_.segmentedCloudRange[i-2]
                         + segMsg_.segmentedCloudRange[i-1] - segMsg_.segmentedCloudRange[i] * 10

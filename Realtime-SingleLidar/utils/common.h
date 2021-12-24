@@ -45,7 +45,7 @@ struct PointXYZITS{
 
 // 里程计参数
 // VLP-16 or RSLidar-16
-const int N_SCAN = 16;
+const int N_SCAN = 32;
 const int Horizon_SCAN = 1800;
 const float ang_res_x = 0.2;      //水平方向上角度分辨率
 const float ang_res_y = 2.0;      //竖直方向上角度分辨率

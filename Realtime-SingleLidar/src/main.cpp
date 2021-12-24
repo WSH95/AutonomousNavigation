@@ -308,9 +308,11 @@ int main(){
             OdometryOut odomOut;
             odometry_out_channel.pop_uptodate(odomOut);
             for(int i=0; i<6; i++){
-                outfile<<odomOut.transformDataSum[i]<<" ";
+//                outfile<<odomOut.transformDataSum[i]<<" ";
+                std::cout << odomOut.transformDataSum[i]<<" ";
             }
-            outfile<<endl;
+//            outfile<<endl;
+            std::cout << std::endl;
         }
         NavigationThread.join();
     }
