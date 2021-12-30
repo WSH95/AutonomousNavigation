@@ -302,17 +302,17 @@ int main(){
                                 ref(odometry_out_channel), ref(featureExtra_out_channel));
         
         ofstream outfile;
-        outfile.open("odomData.txt", ios::out | ios::trunc );
+        outfile.open("../../data/odomData3.txt", ios::out | ios::trunc );
         while(true){
             //取里程计值
             OdometryOut odomOut;
             odometry_out_channel.pop_uptodate(odomOut);
             for(int i=0; i<6; i++){
-//                outfile<<odomOut.transformDataSum[i]<<" ";
-                std::cout << odomOut.transformDataSum[i]<<" ";
+                outfile<<odomOut.transformDataSum[i]<<" ";
+//                std::cout << odomOut.transformDataSum[i]<<" ";
             }
-//            outfile<<endl;
-            std::cout << std::endl;
+            outfile<<endl;
+//            std::cout << std::endl;
         }
         NavigationThread.join();
     }

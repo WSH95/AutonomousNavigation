@@ -25,7 +25,7 @@ task:
   target_follow: false # There will be a given target position if TRUE. Otherwise, a viable target position need to be deduced according to the known information.
   route_follow:
     enable: true # follow a given route if TRUE
-    points: [ [ 1, 0 ], [ 2, 0 ] ]
+    points: [ [ 2, 0 ], [ 4, 0 ] ]
     distance_threshold: 0.8
     self_localization_WO_lidar_period: 0.1 # (unit: s)
     self_localization_mode: 0 # 0->lidar only; 1->not use lidar; 2->replace xy by SE(receive from NUC); 3->replace theta by HWT101.
