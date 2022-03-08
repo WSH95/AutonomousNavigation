@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="Remote Host Agx (1e49a820-26af-4e1d-ac7c-0730db56b42d)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/hua/Documents/AutonomousNavigation" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+  </component>
+</project>
