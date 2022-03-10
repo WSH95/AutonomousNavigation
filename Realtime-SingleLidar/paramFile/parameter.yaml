@@ -11,7 +11,7 @@ pattern_select_switch: 1            # 0是人员跟随，1是自主导航
 #单雷达人员跟踪与自主避障算法参数
 visualize: false
 #pcapAddr: '/home/ljh/lidarData/forest/nanyilou/trees_with_object_lidar16.pcap'
-pcapAddr: '../data/lidarOdometry/odom3.pcap' # /home/ljh/lidarData/lidarOdometry/odom3.pcap
+pcapAddr: '' # ../../data/lidarOdometry/odom3.pcap
 
 #地面分割算法参数
 n_threads: 4            # 使用线程数量

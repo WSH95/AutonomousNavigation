@@ -9,6 +9,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="unitree-nx (5d8a4e33-c405-497d-849d-0312b112c785)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/unitree/Documents/AutonomousNavigation" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
   </component>
 </project>

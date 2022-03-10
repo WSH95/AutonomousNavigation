@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.5.0)
-project(Autonomous_Navigation)
+project(AutonomousNavigation)
 
 #set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++14 -pthread -O3")
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-std=c++14 -pthread -O3 -Wall")
 set(CMAKE_EXE_LINKER_FLAGS " -no-pie")
+set(CMAKE_BUILD_TYPE "Release")
 
 FIND_LIBRARY(YAML_CPP_LIBRARIES yaml-cpp)
 
