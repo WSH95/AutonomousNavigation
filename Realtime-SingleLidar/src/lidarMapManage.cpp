@@ -2,7 +2,7 @@
 
 
 void initRSLidar16Param(robosense::rslidar::ST_Param &lidarParam){
-    lidarParam.lidar = robosense::rslidar::RS_Type_Lidar32;
+    lidarParam.lidar = robosense::rslidar::RS_Type_Lidar16;
     lidarParam.resolution = robosense::rslidar::RS_Resolution_5mm;
     //lidarParam.intensity = robosense::rslidar::RS_INTENSITY_EXTERN;
     lidarParam.echo = robosense::rslidar::RS_Echo_Last;//RS_Echo_Strongest;

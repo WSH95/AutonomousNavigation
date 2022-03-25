@@ -24,9 +24,11 @@ enum class Follow_task : int
 enum class Self_localization_mode : int
 {
     only_lidar = 0,
-    no_lidar,
-    replace_lidarXY,
-    replace_lidarTheta
+    only_SE, // use only state estimation
+    replace_lidarXY_SE, // use x, y given by state estimation, and theta by lidar
+    replace_lidarTheta_SE, // use theta given by state estimation, and x, y by lidar
+    replace_lidarTheta_HWT,
+    xy_SE_theta_HWT,
 };
 
 class ConfigParameters
@@ -393,11 +395,11 @@ private:
     void set_selfLocalizationMode_with_cfg()
     {
         int mode = _cfg["task"]["route_follow"]["self_localization_mode"].as<int>();
-        if (mode >= 0 && mode < 4)
+        if (mode >= 0 && mode < 6)
             self_localization_mode = static_cast<Self_localization_mode>(mode);
         else
         {
-            std::cout << "[ERROR] Self-localization mode config wrong in path_planning_config.yaml, (0 1 2 3)"
+            std::cout << "[ERROR] Self-localization mode config wrong in path_planning_config.yaml, (0 1 2 3 4 5)"
                       << std::endl;
             exit(-1);
         }

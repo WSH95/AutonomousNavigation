@@ -10,11 +10,11 @@ except ImportError:
 import struct
 
 class lcm_monitor_odometer(object):
-    __slots__ = ["xLidar", "yLidar", "thetaLidar", "xSE", "ySE", "thetaGyro"]
+    __slots__ = ["xLidar", "yLidar", "thetaLidar", "xSE", "ySE", "thetaSE", "thetaGyro"]
 
-    __typenames__ = ["float", "float", "float", "float", "float", "float"]
+    __typenames__ = ["float", "float", "float", "float", "float", "float", "float"]
 
-    __dimensions__ = [None, None, None, None, None, None]
+    __dimensions__ = [None, None, None, None, None, None, None]
 
     def __init__(self):
         self.xLidar = 0.0
@@ -22,6 +22,7 @@ class lcm_monitor_odometer(object):
         self.thetaLidar = 0.0
         self.xSE = 0.0
         self.ySE = 0.0
+        self.thetaSE = 0.0
         self.thetaGyro = 0.0
 
     def encode(self):
@@ -31,7 +32,7 @@ class lcm_monitor_odometer(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">ffffff", self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaGyro))
+        buf.write(struct.pack(">fffffff", self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaSE, self.thetaGyro))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -45,14 +46,14 @@ class lcm_monitor_odometer(object):
 
     def _decode_one(buf):
         self = lcm_monitor_odometer()
-        self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaGyro = struct.unpack(">ffffff", buf.read(24))
+        self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaSE, self.thetaGyro = struct.unpack(">fffffff", buf.read(28))
         return self
     _decode_one = staticmethod(_decode_one)
 
     _hash = None
     def _get_hash_recursive(parents):
         if lcm_monitor_odometer in parents: return 0
-        tmphash = (0xaa43ec7ff3147ed6) & 0xffffffffffffffff
+        tmphash = (0x90ff41eea4172c2f) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

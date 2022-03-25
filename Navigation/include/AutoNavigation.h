@@ -93,7 +93,10 @@ private:
     float routeTargetThreshold;
     unsigned long numRoutePoints;
     int currentRoutePointIndex = 0;
-    float thetaHWT = 0;
+
+    float xReplace = 0;
+    float yReplace = 0;
+    float thetaReplace = 0;
 
     // functional objects
     AStar::ArcPlanning path_planner;

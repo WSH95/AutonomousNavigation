@@ -13,8 +13,8 @@
 //string startIconAdrress = LIDAR_START_ICON_PATH;
 //string endIconAdrress = CONFIG_END_ICON_PATH;
 
-constexpr int localPort = 6616; // receive base position x y
-constexpr int BASE_POSITION_XY_LENGTH = 15; // head->BaseXY
+constexpr int localPort = 6618; // receive pose from robot {x y z roll pitch yaw}
+constexpr int POSE_SE_UDP_LENGTH = 31; // head->PoseSE, {x y z roll pitch yaw}
 
 AutoNavigation::AutoNavigation()
 {
@@ -67,8 +67,11 @@ void AutoNavigation::init()
     loop_remoteSend = LoopFunction("sendRemote", cfg->get_send_period(),
                                    boost::bind(&AutoNavigation::sendPathCommand, this));
 
-    udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
-    strncpy((char *) sendBuf, "Auto", 5);
+    if (cfg->get_use_udp())
+    {
+        udp.init(cfg->get_ip_addr(), cfg->get_port(), localPort, 0);
+        strncpy((char *) sendBuf, "Auto", 5);
+    }
 
     /// route following
     loop_selfLocalizationWOLidar = LoopFunction("selfLocalizationWOLidar", cfg->self_localization_WO_lidar_period,
@@ -422,33 +425,36 @@ void AutoNavigation::getPathCommandGivenRoute()
         yCurrent = newLidarOdometer.transformDataSum[4];
         thetaCurrent = newLidarOdometer.transformDataSum[2];
     }
-    else
+    else if ((cfg->self_localization_mode == Self_localization_mode::only_SE) ||
+            (cfg->self_localization_mode == Self_localization_mode::xy_SE_theta_HWT))
     {
         std::vector<float> tmp_location;
         tmp_location.resize(3);
         selfLocalizationQueue.pop_anyway(&tmp_location);
 
-        if (cfg->self_localization_mode == Self_localization_mode::no_lidar)
+        xCurrent = tmp_location[0];
+        yCurrent = tmp_location[1];
+        thetaCurrent = tmp_location[2];
+    }
+    else
+    {
+        odometry_out_channel.pop_uptodate(newLidarOdometer);
+
+        std::vector<float> tmp_location;
+        tmp_location.resize(3);
+        selfLocalizationQueue.pop_anyway(&tmp_location);
+
+        if (cfg->self_localization_mode == Self_localization_mode::replace_lidarXY_SE)
         {
             xCurrent = tmp_location[0];
             yCurrent = tmp_location[1];
-            thetaCurrent = tmp_location[2];
+            thetaCurrent = newLidarOdometer.transformDataSum[2];
         }
         else
         {
-            odometry_out_channel.pop_uptodate(newLidarOdometer);
-            if (cfg->self_localization_mode == Self_localization_mode::replace_lidarXY)
-            {
-                xCurrent = tmp_location[0];
-                yCurrent = tmp_location[1];
-                thetaCurrent = newLidarOdometer.transformDataSum[2];
-            }
-            else
-            {
-                xCurrent = newLidarOdometer.transformDataSum[3];
-                yCurrent = newLidarOdometer.transformDataSum[4];
-                thetaCurrent = tmp_location[2];
-            }
+            xCurrent = newLidarOdometer.transformDataSum[3];
+            yCurrent = newLidarOdometer.transformDataSum[4];
+            thetaCurrent = tmp_location[2];
         }
     }
 
@@ -553,46 +559,67 @@ void AutoNavigation::getPathCommandGivenRoute()
 
 void AutoNavigation::selfLocalizationWOLidar()
 {
-    float xBody = 0, yBody = 0;
-    float tmpTheta = 0;
-
-    if (cfg->self_localization_mode != Self_localization_mode::replace_lidarTheta)
+    if ((cfg->self_localization_mode == Self_localization_mode::only_SE) ||
+        (cfg->self_localization_mode == Self_localization_mode::replace_lidarXY_SE) ||
+        (cfg->self_localization_mode == Self_localization_mode::replace_lidarTheta_SE) ||
+        (cfg->self_localization_mode == Self_localization_mode::xy_SE_theta_HWT))
     {
+        float xBody, yBody, thetaBody;
+
         /// receive body position XY from NUC.
         uint8_t recvBuf[1024];
+        int len = -1;
         for (unsigned char &elem: recvBuf)
             elem = 0;
-        int len = udp.Receive(recvBuf);
-        if (len == BASE_POSITION_XY_LENGTH)
+        if (cfg->get_use_udp())
+            len = udp.Receive(recvBuf);
+        if (len == POSE_SE_UDP_LENGTH)
         {
             auto head = std::string(recvBuf, recvBuf + 6);
-            if (head == "BaseXY")
+            if (head == "PoseSE")
             {
                 xBody = SocketTools::ConvertByte2Float((unsigned char *) (recvBuf + 7));
                 yBody = SocketTools::ConvertByte2Float((unsigned char *) (recvBuf + 11));
+                thetaBody = SocketTools::ConvertByte2Float((unsigned char *) (recvBuf + 27));
+
+                if (cfg->self_localization_mode == Self_localization_mode::only_SE)
+                {
+                    xReplace = xBody;
+                    yReplace = yBody;
+                    thetaReplace = thetaBody;
+                }
+                else if ((cfg->self_localization_mode == Self_localization_mode::replace_lidarXY_SE) ||
+                         (cfg->self_localization_mode == Self_localization_mode::xy_SE_theta_HWT))
+                {
+                    xReplace = xBody;
+                    yReplace = yBody;
+                }
+                else
+                { thetaReplace = thetaBody; }
             }
             else
             {
-                std::cout << "[BaseXY] Head received error!" << std::endl;
+                std::cout << "[PoseSE] Head received error!" << std::endl;
             }
         }
         else
         {
-            std::cout << "[BaseXY] Length received error!" << " (" << len << ")" << std::endl;
+            std::cout << "[PoseSE] Length received error!" << " (" << len << ")" << std::endl;
             return;
         }
     }
 
-    if (cfg->self_localization_mode != Self_localization_mode::replace_lidarXY)
+    if ((cfg->self_localization_mode == Self_localization_mode::replace_lidarTheta_HWT) ||
+        (cfg->self_localization_mode == Self_localization_mode::xy_SE_theta_HWT))
     {
         /// read Z-axis euler angle.
-        tmpTheta = readThetaFromHWT101.readZ_rad();
+        float tmpThetaHWT = readThetaFromHWT101.readZ_rad();
         // TODO read error
-        if (tmpTheta != -12345)
-            thetaHWT = tmpTheta;
+        if (tmpThetaHWT != -12345)
+            thetaReplace = tmpThetaHWT;
     }
 
-    selfLocalizationQueue.push({xBody, yBody, thetaHWT});
+    selfLocalizationQueue.push({xReplace, yReplace, thetaReplace});
 }
 
 void AutoNavigation::calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget)
@@ -873,8 +900,9 @@ void AutoNavigation::start()
     if ((cfg->follow_task == Follow_task::route_follow) &&
         (cfg->self_localization_mode != Self_localization_mode::only_lidar))
     {
-        if (cfg->self_localization_mode != Self_localization_mode::replace_lidarXY)
-            readThetaFromHWT101.setup();
+        if ((cfg->self_localization_mode == Self_localization_mode::replace_lidarTheta_HWT) ||
+            (cfg->self_localization_mode == Self_localization_mode::xy_SE_theta_HWT))
+        { readThetaFromHWT101.setup(); }
         loop_selfLocalizationWOLidar.start();
     }
 

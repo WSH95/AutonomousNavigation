@@ -30,11 +30,11 @@ void LidarMapThreadFun(volatile bool &RunFlag, const InitParams& GlobalParams, L
     initRSLidar16Param(param_RS16);
     // 初始化16线雷达解码器
     robosense::rslidar::RSLidarDecoder<PointXYZITS> decoder_RS16(param_RS16);
-    string device_ip16 = "192.168.3.200";// 32线ip
-    //string device_ip16 = "192.168.1.216";
+//    string device_ip16 = "192.168.3.200";// 32线ip
+    string device_ip16 = "192.168.11.216";
     string pcap_file_dir16 = pcapAddr;
-    uint16_t msop_port16 = 6699,difop_port16 = 7788;// 32线端口号
-    //uint16_t msop_port16 = 6616,difop_port16 = 7716;
+//    uint16_t msop_port16 = 6699,difop_port16 = 7788;// 32线端口号
+    uint16_t msop_port16 = 6616,difop_port16 = 7716;
     robosense::rslidar_input::Input InputObj_RS16(device_ip16,msop_port16,difop_port16,pcap_file_dir16);
 
     thread ListenRS16(listenRSLidar, ref(decoder_RS16), ref(InputObj_RS16), ref(PCIPtr_Q16), 32,
@@ -195,11 +195,11 @@ void AutonomousNav(volatile bool &RunFlag, const InitParams& GlobalParams, Lidar
     initRSLidar16Param(param_RS16);
     // 初始化16线雷达解码器
     robosense::rslidar::RSLidarDecoder<PointXYZITS> decoder_RS16(param_RS16);
-    string device_ip16 = "192.168.3.200";// 32线ip
-    //string device_ip16 = "192.168.1.216";
+//    string device_ip16 = "192.168.3.200";// 32线ip
+    string device_ip16 = "192.168.11.216";
     string pcap_file_dir16 = pcapAddr;
-    uint16_t msop_port16 = 6699,difop_port16 = 7788;// 32线端口号
-    //uint16_t msop_port16 = 6616,difop_port16 = 7716;
+//    uint16_t msop_port16 = 6699,difop_port16 = 7788;// 32线端口号
+    uint16_t msop_port16 = 6616,difop_port16 = 7716;
     robosense::rslidar_input::Input InputObj_RS16(device_ip16,msop_port16,difop_port16,pcap_file_dir16);
 
     thread ListenRS16(listenRSLidar, ref(decoder_RS16), ref(InputObj_RS16), ref(PCIPtr_Q16), 32,

@@ -16,6 +16,7 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
     public float thetaLidar;
     public float xSE;
     public float ySE;
+    public float thetaSE;
     public float thetaGyro;
  
     public lcm_monitor_odometer()
@@ -23,7 +24,7 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0xaa43ec7ff3147ed6L;
+    public static final long LCM_FINGERPRINT_BASE = 0x90ff41eea4172c2fL;
  
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -58,6 +59,8 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
         outs.writeFloat(this.xSE); 
  
         outs.writeFloat(this.ySE); 
+ 
+        outs.writeFloat(this.thetaSE); 
  
         outs.writeFloat(this.thetaGyro); 
  
@@ -95,6 +98,8 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
  
         this.ySE = ins.readFloat();
  
+        this.thetaSE = ins.readFloat();
+ 
         this.thetaGyro = ins.readFloat();
  
     }
@@ -111,6 +116,8 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
         outobj.xSE = this.xSE;
  
         outobj.ySE = this.ySE;
+ 
+        outobj.thetaSE = this.thetaSE;
  
         outobj.thetaGyro = this.thetaGyro;
  

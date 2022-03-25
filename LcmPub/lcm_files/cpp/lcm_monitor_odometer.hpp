@@ -24,6 +24,8 @@ class lcm_monitor_odometer
 
         float      ySE;
 
+        float      thetaSE;
+
         float      thetaGyro;
 
     public:
@@ -137,6 +139,9 @@ int lcm_monitor_odometer::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->ySE, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->thetaSE, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __float_encode_array(buf, offset + pos, maxlen - pos, &this->thetaGyro, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -162,6 +167,9 @@ int lcm_monitor_odometer::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->ySE, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->thetaSE, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __float_decode_array(buf, offset + pos, maxlen - pos, &this->thetaGyro, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -177,12 +185,13 @@ int lcm_monitor_odometer::_getEncodedSizeNoHash() const
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
     enc_size += __float_encoded_array_size(NULL, 1);
+    enc_size += __float_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t lcm_monitor_odometer::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0xaa43ec7ff3147ed6LL;
+    uint64_t hash = 0x90ff41eea4172c2fLL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

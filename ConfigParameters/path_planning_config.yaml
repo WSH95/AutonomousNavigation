@@ -26,9 +26,14 @@ task:
   route_follow:
     enable: true # follow a given route if TRUE
     points: [ [ 2, 0 ], [ 4, 0 ] ]
-    distance_threshold: 0.8
+    distance_threshold: 0.8 # for the middle point
     self_localization_WO_lidar_period: 0.1 # (unit: s)
-    self_localization_mode: 0 # 0->lidar only; 1->not use lidar; 2->replace xy by SE(receive from NUC); 3->replace theta by HWT101.
+    self_localization_mode: 0  # 0 -> lidar only
+                               # 1 -> only use SE(robot state estimate)
+                               # 2 -> replace xy by SE
+                               # 3 -> replace theta by SE
+                               # 4 -> replace theta by HWT101
+                               # 5 -> xy by SE & theta by HWT101
   cin_points_follow: false
 
 command:
@@ -46,7 +51,7 @@ lines:
 
 show:
   lines: false
-  map_image: true
+  map_image: false
 
 monitor:
   use_lcm: true

@@ -9,12 +9,12 @@
 int AutoNavigation::monitorOdometerData()
 {
     std::cout << "[1] lidar." << std::endl;
-    std::cout << "[2] theta (from HWT101)." << std::endl;
-    std::cout << "[3] xy (from NUC)." << std::endl;
-    std::cout << "[4] theta + xy." << std::endl;
-    std::cout << "[5] lidar + theta." << std::endl;
-    std::cout << "[6] lidar + xy." << std::endl;
-    std::cout << "[7] lidar + theta + xy." << std::endl;
+    std::cout << "[2] HWT101." << std::endl;
+    std::cout << "[3] SE." << std::endl;
+    std::cout << "[4] theta(HWT101) + xy(SE)." << std::endl;
+    std::cout << "[5] lidar + HWT101." << std::endl;
+    std::cout << "[6] lidar + SE." << std::endl;
+    std::cout << "[7] lidar + SE + theta(HWT101)." << std::endl;
     std::cout << std::endl;
     std::cout << "Please choose a integer number from 1 to 7 indicating what data you want to monitor: ";
     int num;
@@ -52,20 +52,20 @@ int AutoNavigation::monitorOdometerData()
         {
             if (num == 2)
             {
-                cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta;
+                cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta_HWT;
                 readThetaFromHWT101.setup();
-                fileNameHead = "theta_";
+                fileNameHead = "theta_HWT_";
             }
             else if (num == 3)
             {
-                cfg->self_localization_mode = Self_localization_mode::replace_lidarXY;
-                fileNameHead = "xy_";
+                cfg->self_localization_mode = Self_localization_mode::only_SE;
+                fileNameHead = "se_";
             }
             else
             {
-                cfg->self_localization_mode = Self_localization_mode::no_lidar;
+                cfg->self_localization_mode = Self_localization_mode::xy_SE_theta_HWT;
                 readThetaFromHWT101.setup();
-                fileNameHead = "theta+xy_";
+                fileNameHead = "xy_SE_theta_HWT_";
             }
         }
         else // need lidar thread as well
@@ -73,20 +73,20 @@ int AutoNavigation::monitorOdometerData()
             useLidar = true;
             if (num == 5)
             {
-                cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta;
+                cfg->self_localization_mode = Self_localization_mode::replace_lidarTheta_HWT;
                 readThetaFromHWT101.setup();
-                fileNameHead = "lidar+theta_";
+                fileNameHead = "lidar+theta_HWT_";
             }
             else if (num == 6)
             {
-                cfg->self_localization_mode = Self_localization_mode::replace_lidarXY;
-                fileNameHead = "lidar+xy_";
+                cfg->self_localization_mode = Self_localization_mode::only_SE;
+                fileNameHead = "lidar+se_";
             }
             else
             {
-                cfg->self_localization_mode = Self_localization_mode::no_lidar;
+                cfg->self_localization_mode = Self_localization_mode::xy_SE_theta_HWT;
                 readThetaFromHWT101.setup();
-                fileNameHead = "lidar+theta+xy_";
+                fileNameHead = "lidar+xy_SE+theta_HWT_";
             }
 
             getParameter(setParam);
@@ -127,7 +127,13 @@ int AutoNavigation::monitorOdometerData()
         monitorOdometer.thetaLidar = newLidarOdometer.transformDataSum[2];
         monitorOdometer.xSE = tmp_location[0];
         monitorOdometer.ySE = tmp_location[1];
-        monitorOdometer.thetaGyro = tmp_location[2];
+        if ((num == 2) || (num == 4) || (num == 5) || (num == 7))
+            monitorOdometer.thetaGyro = tmp_location[2];
+        else
+            monitorOdometer.thetaSE = tmp_location[2];
+
+        std::cout << "x: " << monitorOdometer.xLidar << "\ty: " << monitorOdometer.yLidar << "\ttheta: "
+                  << monitorOdometer.thetaSE << std::endl;
 
         if (cfg->monitor_use_lcm)
             lcm.publish("monitorOdometer", &monitorOdometer);
