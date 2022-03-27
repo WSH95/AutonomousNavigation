@@ -55,10 +55,12 @@ baseMap::baseMap()
 VecVec baseMap::DistanceMap(const VecVec &GridState_)
 {
     VecVec tmpMap = {{0}};
-    tmpMap.resize(int(GridState_.size()));
+    auto num_row = GridState_.size();
+    auto num_col = GridState_[0].size();
+    tmpMap.resize(num_row);
     for (auto &elem: tmpMap)
     {
-        elem.resize(int(GridState_[0].size()), 0);
+        elem.resize(num_col, 0);
     }
 
     CoordinateList tmpCoord;
@@ -91,90 +93,148 @@ VecVec baseMap::DistanceMap(const VecVec &GridState_)
             }
         }
     }
-    if (tmpCoord.size() > 0)
-    {
-        for (auto it = tmpCoord.begin(); it != tmpCoord.end();)
-        {
-            bool flag = false;
-            for (int iii = 0; iii < 8; ++iii)
-            {
-                int XX = it->x;
-                int YY = it->y;
-                int newXX = XX + tmpDirections[iii].x;
-                int newYY = YY + tmpDirections[iii].y;
 
-                // push the available points on border to a vector.
-                if (newXX < 0 || newXX >= tmpMap.size() ||
-                    newYY < 0 || newYY >= tmpMap[0].size())
-                {
-                    if (robot_block_radius < tmpDistance)
-                    {
-                        Eigen::Vector2i a(XX, YY);
-                        border_free_points.push_back(a);
-                    }
-                    continue;
-                }
-                if (tmpMap[newXX][newYY] < 0)
-                {
-                    tmpMap[XX][YY] = 1;
-                    it = tmpCoord.erase(it);
-                    flag = true;
-                    break;
-                }
-                else
-                {
-                    continue;
-                }
-            }
-            if (!flag)
-            {
-                ++it;
-            }
-        }
-        ++tmpDistance;
+    if (tmpCoord.size() == (num_row * num_col)) /// there is no block in the whole map.
+    {
+        for (auto &elem: tmpMap)
+            for (auto &elem2: elem)
+                elem2 = 1000;
     }
-    while (tmpCoord.size() > 0)
+    else
     {
-        for (auto it = tmpCoord.begin(); it != tmpCoord.end();)
+        if (tmpCoord.size() > 0)
         {
-            bool flag = false;
-            for (int iii = 0; iii < 8; ++iii)
+            for (auto it = tmpCoord.begin(); it != tmpCoord.end();)
             {
-                int XX = it->x;
-                int YY = it->y;
-                int newXX = XX + tmpDirections[iii].x;
-                int newYY = YY + tmpDirections[iii].y;
-
-                // push the available points on border to a vector.
-                if (newXX < 0 || newXX >= tmpMap.size() ||
-                    newYY < 0 || newYY >= tmpMap[0].size())
+                bool flag = false;
+                for (int iii = 0; iii < 8; ++iii)
                 {
-                    if (robot_block_radius < tmpDistance)
+                    int XX = it->x;
+                    int YY = it->y;
+                    int newXX = XX + tmpDirections[iii].x;
+                    int newYY = YY + tmpDirections[iii].y;
+
+                    // push the available points on border to a vector. (there are bugs, points are added to 'border_free_points' repeatedly)
+                    if (newXX < 0 || newXX >= tmpMap.size() ||
+                        newYY < 0 || newYY >= tmpMap[0].size())
                     {
-                        Eigen::Vector2i a(XX, YY);
-                        border_free_points.push_back(a);
+//                    if (robot_block_radius < tmpDistance)
+//                    {
+//                        Eigen::Vector2i a(XX, YY);
+//                        border_free_points.push_back(a);
+//                    }
+                        continue;
                     }
-                    continue;
+                    if (tmpMap[newXX][newYY] < 0)
+                    {
+                        tmpMap[XX][YY] = 1;
+                        it = tmpCoord.erase(it);
+                        flag = true;
+                        break;
+                    }
+                    else
+                    {
+                        continue;
+                    }
                 }
-
-                if (tmpMap[newXX][newYY] == tmpDistance - 1)
+                if (!flag)
                 {
-                    tmpMap[XX][YY] = tmpDistance;
-                    it = tmpCoord.erase(it);
-                    flag = true;
-                    break;
-                }
-                else
-                {
-                    continue;
+                    ++it;
                 }
             }
-            if (!flag)
-            {
-                ++it;
-            }
+            ++tmpDistance;
         }
-        ++tmpDistance;
+        while (tmpCoord.size() > 0)
+        {
+            for (auto it = tmpCoord.begin(); it != tmpCoord.end();)
+            {
+                bool flag = false;
+                for (int iii = 0; iii < 8; ++iii)
+                {
+                    int XX = it->x;
+                    int YY = it->y;
+                    int newXX = XX + tmpDirections[iii].x;
+                    int newYY = YY + tmpDirections[iii].y;
+
+                    // push the available points on border to a vector. (there are bugs, points are added to 'border_free_points' repeatedly)
+                    if (newXX < 0 || newXX >= tmpMap.size() ||
+                        newYY < 0 || newYY >= tmpMap[0].size())
+                    {
+//                    if (robot_block_radius < tmpDistance)
+//                    {
+//                        Eigen::Vector2i a(XX, YY);
+//                        border_free_points.push_back(a);
+//                    }
+                        continue;
+                    }
+
+                    if (tmpMap[newXX][newYY] == tmpDistance - 1)
+                    {
+                        tmpMap[XX][YY] = tmpDistance;
+                        it = tmpCoord.erase(it);
+                        flag = true;
+                        break;
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                if (!flag)
+                {
+                    ++it;
+                }
+            }
+            ++tmpDistance;
+        }
+    }
+
+    /// fill the 'border_free_points'
+    if (tmpMap[0][0] > robot_block_radius)
+    {
+        Eigen::Vector2i a(0, 0);
+        border_free_points.push_back(a);
+    }
+    if (tmpMap[0][num_col - 1] > robot_block_radius)
+    {
+        Eigen::Vector2i a(0, num_col - 1);
+        border_free_points.push_back(a);
+    }
+    if (tmpMap[num_row - 1][0] > robot_block_radius)
+    {
+        Eigen::Vector2i a(num_row - 1, 0);
+        border_free_points.push_back(a);
+    }
+    if (tmpMap[num_row - 1][num_col - 1] > robot_block_radius)
+    {
+        Eigen::Vector2i a(num_row - 1, num_col - 1);
+        border_free_points.push_back(a);
+    }
+    for (int c = 1; c < (num_col - 1); c++)
+    {
+        if (tmpMap[0][c] > robot_block_radius)
+        {
+            Eigen::Vector2i a(0, c);
+            border_free_points.push_back(a);
+        }
+        if (tmpMap[num_row - 1][c] > robot_block_radius)
+        {
+            Eigen::Vector2i a(num_row - 1, c);
+            border_free_points.push_back(a);
+        }
+    }
+    for (int r = 1; r < (num_row - 1); r++)
+    {
+        if (tmpMap[r][0] > robot_block_radius)
+        {
+            Eigen::Vector2i a(r, 0);
+            border_free_points.push_back(a);
+        }
+        if (tmpMap[r][num_col - 1] > robot_block_radius)
+        {
+            Eigen::Vector2i a(r, num_col - 1);
+            border_free_points.push_back(a);
+        }
     }
 
     return tmpMap;
@@ -697,7 +757,8 @@ void Planning::releaseNodes(NodeSet &nodes_)
     }
 }
 
-CoordinateList Planning::findPath(Vec2d source, Vec2d target, Vec2d init_direction, int init_len, double distance_threshold, bool raw)
+CoordinateList
+Planning::findPath(Vec2d source, Vec2d target, Vec2d init_direction, int init_len, double distance_threshold, bool raw)
 {
     /// Do not start planning if the distance between source and target is smaller than distance_threshold.
     if ((abs(target.x - source.x) < distance_threshold) && (abs(target.y - source.y) < distance_threshold))
@@ -919,7 +980,8 @@ CoordinateList Planning::findPath(Vec2d source, Vec2d target, Vec2d init_directi
     return path;
 }
 
-CoordinateList Planning::simplePath(Vec2d source_, Vec2d target_, Vec2d init_direction, int init_len, double distance_threshold)
+CoordinateList
+Planning::simplePath(Vec2d source_, Vec2d target_, Vec2d init_direction, int init_len, double distance_threshold)
 {
     CoordinateList path_ = findPath(source_, target_, init_direction, init_len, distance_threshold);
 
@@ -1201,9 +1263,20 @@ arcInfo Arc::singleArc(pointCoord startCoord_, pointCoord midCoord_, pointCoord 
     pointCoord unit_s2m = start2mid * (1.0 / len_s2m);
     pointCoord unit_m2e = mid2end * (1.0 / len_m2e);
 
-    if (cross_ == 0)
+    if (cross_ == 0) /// three points in one line, but two vector not necessarily in the same direction
     {
-        return Line(startCoord_, endCoord_);
+        if (abs(theta_) < 1e-4) /// the same direction
+            return Line(startCoord_, endCoord_);
+        else if (abs(abs(theta_) - 3.14159) < 1e-4) /// the opposite direction
+        {
+            single_arc.rotFlag = 1;
+            single_arc.lenR = 0;
+            single_arc.theta = 3.14159;
+            single_arc.startCoord = midCoord_;
+            single_arc.midCoord = midCoord_;
+            single_arc.endCoord = midCoord_;
+            single_arc.centreCoord = midCoord_;
+        }
     }
     else if (cross_ > 0)
     {
@@ -1222,7 +1295,7 @@ arcInfo Arc::singleArc(pointCoord startCoord_, pointCoord midCoord_, pointCoord 
     if (len_s2m < len_m2e)
     {
         len = len_s2m;
-        single_arc.lenR = len / tan(single_arc.theta / 2);
+        single_arc.lenR = abs(len / tan(single_arc.theta / 2 + 1e-6));
         if (Rd < single_arc.lenR)
         {
             single_arc.lenR = Rd;
@@ -1565,21 +1638,27 @@ std::vector<std::vector<float>> AStar::path2cmd(const std::vector<arcInfo> &path
 {
     std::vector<std::vector<float>> cmd;
     std::vector<float> tmpCmd(4);
+    auto num_path = path_.size();
 
-    for (auto path: path_)
+    for (int i = 0; i < num_path; i++)
     {
+        auto path = path_[i];
         auto len_R = resolution * path.lenR;
 
         if (path.rotFlag == 0)
         {
             tmpCmd[0] = (float) (len_R / vel);
-            tmpCmd[1] = vel;
+            /// set velocity as zero if path is too short (e.g. has arrived the target point).
+            if ((i == num_path - 1) && (len_R < resolution))
+                tmpCmd[1] = 0;
+            else
+                tmpCmd[1] = vel;
             tmpCmd[2] = 0;
             tmpCmd[3] = 0;
         }
         else
         {
-            if (len_R < 1)
+            if (len_R < resolution)
             {
                 tmpCmd[0] = (float) (path.theta / w);
                 tmpCmd[1] = 0;
