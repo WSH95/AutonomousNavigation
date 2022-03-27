@@ -2,18 +2,25 @@
 <project version="4">
   <component name="PublishConfigData" remoteFilesAllowedToDisappearOnAutoupload="false">
     <serverData>
-      <paths name="Remote Host Agx (1e49a820-26af-4e1d-ac7c-0730db56b42d)">
+      <paths name="UnitreeA1 (2d5271fa-7635-4988-857c-a999946c6906)">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/hua/Documents/AutonomousNavigation" local="$PROJECT_DIR$" />
+            <mapping deploy="/tmp/tmp.te0pKPSGZs" local="$PROJECT_DIR$" />
           </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/build" />
+          </excludedPaths>
         </serverdata>
       </paths>
-      <paths name="unitree-nx (5d8a4e33-c405-497d-849d-0312b112c785)">
+      <paths name="unitree-nx-123_12 (1ba73f90-c9d0-4d39-a67a-112cd2ea5e4a)">
         <serverdata>
           <mappings>
             <mapping deploy="/home/unitree/Documents/AutonomousNavigation" local="$PROJECT_DIR$" />
           </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/build" />
+            <excludedPath local="true" path="$PROJECT_DIR$/Realtime-SingleLidar/build" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>

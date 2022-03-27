@@ -3,10 +3,10 @@
 //
 
 #include "AutoNavigation.h"
-#include <lcm/lcm-cpp.hpp>
-#include "lcm_monitor_odometer.hpp"
+//#include <lcm/lcm-cpp.hpp>
+//#include "lcm_monitor_odometer.hpp"
 
-int AutoNavigation::monitorOdometerData()
+void AutoNavigation::monitorOdometerData()
 {
     std::cout << "[1] lidar." << std::endl;
     std::cout << "[2] HWT101." << std::endl;
@@ -105,13 +105,13 @@ int AutoNavigation::monitorOdometerData()
         outfile.open("../data/" + fileName, ios::out | ios::trunc);
 
 
-    lcm::LCM lcm("udpm://239.255.12.21:1221?ttl=255");
-    if (cfg->monitor_use_lcm)
-    {
-        if (!lcm.good())
-            return 1;
-    }
-    lcm_monitor_odometer monitorOdometer{};
+//    lcm::LCM lcm("udpm://239.255.12.21:1221?ttl=255");
+//    if (cfg->monitor_use_lcm)
+//    {
+//        if (!lcm.good())
+//            return 1;
+//    }
+//    lcm_monitor_odometer monitorOdometer{};
 
     while (true)
     {
@@ -122,29 +122,27 @@ int AutoNavigation::monitorOdometerData()
             odometry_out_channel.pop_uptodate(newLidarOdometer);
         selfLocalizationQueue.pop_anyway(&tmp_location);
 
-        monitorOdometer.xLidar = newLidarOdometer.transformDataSum[3];
-        monitorOdometer.yLidar = newLidarOdometer.transformDataSum[4];
-        monitorOdometer.thetaLidar = newLidarOdometer.transformDataSum[2];
-        monitorOdometer.xSE = tmp_location[0];
-        monitorOdometer.ySE = tmp_location[1];
+        monitorOdometer.odomLidar[0] = newLidarOdometer.transformDataSum[3];
+        monitorOdometer.odomLidar[1] = newLidarOdometer.transformDataSum[4];
+        monitorOdometer.odomLidar[2] = newLidarOdometer.transformDataSum[2];
+        monitorOdometer.odomSE[0] = tmp_location[0];
+        monitorOdometer.odomSE[1] = tmp_location[1];
         if ((num == 2) || (num == 4) || (num == 5) || (num == 7))
             monitorOdometer.thetaGyro = tmp_location[2];
         else
-            monitorOdometer.thetaSE = tmp_location[2];
-
-        std::cout << "x: " << monitorOdometer.xLidar << "\ty: " << monitorOdometer.yLidar << "\ttheta: "
-                  << monitorOdometer.thetaSE << std::endl;
+            monitorOdometer.odomSE[2] = tmp_location[2];
 
         if (cfg->monitor_use_lcm)
-            lcm.publish("monitorOdometer", &monitorOdometer);
+            lcmMonitor.publish("monitorOdometer", &monitorOdometer);
 
         if (cfg->monitor_save_txt)
         {
-            outfile << monitorOdometer.xLidar << " ";
-            outfile << monitorOdometer.yLidar << " ";
-            outfile << monitorOdometer.thetaLidar << " ";
-            outfile << monitorOdometer.xSE << " ";
-            outfile << monitorOdometer.ySE << " ";
+            outfile << monitorOdometer.odomLidar[0] << " ";
+            outfile << monitorOdometer.odomLidar[1] << " ";
+            outfile << monitorOdometer.odomLidar[2] << " ";
+            outfile << monitorOdometer.odomSE[0] << " ";
+            outfile << monitorOdometer.odomSE[1] << " ";
+            outfile << monitorOdometer.odomSE[2] << " ";
             outfile << monitorOdometer.thetaGyro << std::endl;
         }
 
@@ -152,7 +150,6 @@ int AutoNavigation::monitorOdometerData()
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    return 0;
 }
 
 int main()

@@ -23,6 +23,9 @@
 
 #include "ReadEulerZ_HWT101.hpp"
 
+#include <lcm/lcm-cpp.hpp>
+#include "lcm_monitor_odometer.hpp"
+
 
 class AutoNavigation
 {
@@ -47,6 +50,8 @@ public:
 
     void getPathCommandGivenRoute();
 
+    void getPathCommandGivenRoute_noBlock();
+
     void calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget);
 
 //    void getPathCommandTest();
@@ -69,9 +74,9 @@ public:
 
     void selfLocalizationWOLidar();
 
-    int monitorOdometerData();
+    void monitorOdometerData();
 
-
+    void sendMapImage(const std::vector<std::vector<int>> &map_, const std::vector<AStar::arcInfo> &path_);
 private:
     ConfigParameters *cfg;
     bool ifExternCfg;
@@ -131,6 +136,7 @@ private:
     // UDP Client
     Udp udp;
     RecvRequest udp_sendImg;
+    Udp receiveLegOdmUdp;
 //    Udp udpTest;
     uint8_t sendBuf[AUTO_COMMAND_LENGTH];
 
@@ -145,6 +151,12 @@ private:
     Channel<ExtractionOut> featureExtra_out_channel;// true为阻塞传输
     InitParams setParam;// 声明并初始化设定参数
     OdometryOut newLidarOdometer;
+
+    lcm::LCM lcmMonitor;
+    lcm_monitor_odometer monitorOdometer{};
+
+    timespec l_startTime;
+    timespec l_endTime;
 };
 
 #endif //AUTONOMOUS_NAVIGATION_AUTONAVIGATION_H

@@ -1,10 +1,8 @@
 struct lcm_monitor_odometer
 {
-    float xLidar;
-    float yLidar;
-    float thetaLidar;
-    float xSE;
-    float ySE;
-    float thetaSE;
+    float odomLidar[3];
+    float odomSE[3];
     float thetaGyro;
+    float odomCurrent[3];
+    float currentWayPoint[2];
 }

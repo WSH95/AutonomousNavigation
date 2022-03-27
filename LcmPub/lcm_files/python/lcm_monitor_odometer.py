@@ -10,20 +10,18 @@ except ImportError:
 import struct
 
 class lcm_monitor_odometer(object):
-    __slots__ = ["xLidar", "yLidar", "thetaLidar", "xSE", "ySE", "thetaSE", "thetaGyro"]
+    __slots__ = ["odomLidar", "odomSE", "thetaGyro", "odomCurrent", "currentWayPoint"]
 
-    __typenames__ = ["float", "float", "float", "float", "float", "float", "float"]
+    __typenames__ = ["float", "float", "float", "float", "float"]
 
-    __dimensions__ = [None, None, None, None, None, None, None]
+    __dimensions__ = [[3], [3], None, [3], [2]]
 
     def __init__(self):
-        self.xLidar = 0.0
-        self.yLidar = 0.0
-        self.thetaLidar = 0.0
-        self.xSE = 0.0
-        self.ySE = 0.0
-        self.thetaSE = 0.0
+        self.odomLidar = [ 0.0 for dim0 in range(3) ]
+        self.odomSE = [ 0.0 for dim0 in range(3) ]
         self.thetaGyro = 0.0
+        self.odomCurrent = [ 0.0 for dim0 in range(3) ]
+        self.currentWayPoint = [ 0.0 for dim0 in range(2) ]
 
     def encode(self):
         buf = BytesIO()
@@ -32,7 +30,11 @@ class lcm_monitor_odometer(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">fffffff", self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaSE, self.thetaGyro))
+        buf.write(struct.pack('>3f', *self.odomLidar[:3]))
+        buf.write(struct.pack('>3f', *self.odomSE[:3]))
+        buf.write(struct.pack(">f", self.thetaGyro))
+        buf.write(struct.pack('>3f', *self.odomCurrent[:3]))
+        buf.write(struct.pack('>2f', *self.currentWayPoint[:2]))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -46,14 +48,18 @@ class lcm_monitor_odometer(object):
 
     def _decode_one(buf):
         self = lcm_monitor_odometer()
-        self.xLidar, self.yLidar, self.thetaLidar, self.xSE, self.ySE, self.thetaSE, self.thetaGyro = struct.unpack(">fffffff", buf.read(28))
+        self.odomLidar = struct.unpack('>3f', buf.read(12))
+        self.odomSE = struct.unpack('>3f', buf.read(12))
+        self.thetaGyro = struct.unpack(">f", buf.read(4))[0]
+        self.odomCurrent = struct.unpack('>3f', buf.read(12))
+        self.currentWayPoint = struct.unpack('>2f', buf.read(8))
         return self
     _decode_one = staticmethod(_decode_one)
 
     _hash = None
     def _get_hash_recursive(parents):
         if lcm_monitor_odometer in parents: return 0
-        tmphash = (0x90ff41eea4172c2f) & 0xffffffffffffffff
+        tmphash = (0x91b3c2d6091d67e1) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff) + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

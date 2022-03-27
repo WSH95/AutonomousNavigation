@@ -10,7 +10,7 @@ robot:
 planning:
   planning_period: 0.1 # (unit: s)
   default_forward_distance: 0.1 # (unit: m) ## The default distance for the robot going forward from start.
-  default_curve_radius: 1.0 # (unit: m) ## The default radius of the fitting path curve.
+  default_curve_radius: 0.3 # (unit: m) ## The default radius of the fitting path curve.
   astar_cost_factors:
     weight_g: 1.2
     weight_f: 0.8
@@ -18,22 +18,24 @@ planning:
     move_diag: 1.414
     weight_distant: 20.0
     max_distant_grid: 10
-  target_distance_threshold: 0.5 # (unit: m) ## Do not start planning if the distance to target is smaller than this number.
+  target_distance_threshold: 0.2 # (unit: m) ## Do not start planning if the distance to target is smaller than this number.
 
 task:
   start_planning: true # Start the path planning thread if TRUE. Otherwise, wait for the start signal.
   target_follow: false # There will be a given target position if TRUE. Otherwise, a viable target position need to be deduced according to the known information.
   route_follow:
     enable: true # follow a given route if TRUE
-    points: [ [ 2, 0 ], [ 4, 0 ] ]
-    distance_threshold: 0.8 # for the middle point
-    self_localization_WO_lidar_period: 0.1 # (unit: s)
-    self_localization_mode: 0  # 0 -> lidar only
-                               # 1 -> only use SE(robot state estimate)
-                               # 2 -> replace xy by SE
-                               # 3 -> replace theta by SE
-                               # 4 -> replace theta by HWT101
-                               # 5 -> xy by SE & theta by HWT101
+#    points: [ [ 3, 0 ], [ 3, 3 ], [ 0, 3 ], [ 0, 0 ] ]
+    points: [ [ 2, 0 ], [ 0, 0 ], [ 2, 0 ], [ 0, 0 ] ]
+    distance_threshold: 0.5 # for the middle point
+    self_localization_WO_lidar_period: 0.05 # (unit: s)
+    self_localization_mode: 1  # 0 -> lidar only
+      # 1 -> only use SE(robot state estimate)
+      # 2 -> replace xy by SE
+      # 3 -> replace theta by SE
+      # 4 -> replace theta by HWT101
+    # 5 -> xy by SE & theta by HWT101
+    no_block_map: true
   cin_points_follow: false
 
 command:
@@ -42,7 +44,7 @@ command:
 
   udp_client:
     use_udp: true # Transfer the commands over the network if TRUE.
-    ip_addr: "192.168.3.3" # "192.168.3.4"
+    ip_addr: "192.168.123.161" # "192.168.3.3" "192.168.3.4"
     port: 6112
     send_period: 0.005 # (unit: s)
 
@@ -51,7 +53,7 @@ lines:
 
 show:
   lines: false
-  map_image: false
+  map_image: true
 
 monitor:
   use_lcm: true

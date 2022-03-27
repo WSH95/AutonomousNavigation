@@ -91,7 +91,7 @@ message("SRC_FILES: ${SRC_FILES}")
 
 # HWT101CT
 include_directories(HWT101)
-
+link_libraries(/usr/local/lib/libmodbus.so.5)
 add_executable(auto_navigation main.cpp ${SRC_FILES})
 
 #[[if (LINK_SHARED_ZED)
@@ -112,7 +112,8 @@ target_link_libraries(auto_navigation
         ${PCL_LIBRARIES}
         ${OpenCV_LIBS}
         -lm
-        modbus)
+        modbus
+        lcm)
 
 include_directories(LcmPub/lcm_files/cpp)
 add_executable(monitorOdometer monitorOdometer.cpp ${SRC_FILES})

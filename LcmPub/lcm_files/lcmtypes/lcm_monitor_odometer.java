@@ -11,20 +11,22 @@ import lcm.lcm.*;
  
 public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
 {
-    public float xLidar;
-    public float yLidar;
-    public float thetaLidar;
-    public float xSE;
-    public float ySE;
-    public float thetaSE;
+    public float odomLidar[];
+    public float odomSE[];
     public float thetaGyro;
+    public float odomCurrent[];
+    public float currentWayPoint[];
  
     public lcm_monitor_odometer()
     {
+        odomLidar = new float[3];
+        odomSE = new float[3];
+        odomCurrent = new float[3];
+        currentWayPoint = new float[2];
     }
  
     public static final long LCM_FINGERPRINT;
-    public static final long LCM_FINGERPRINT_BASE = 0x90ff41eea4172c2fL;
+    public static final long LCM_FINGERPRINT_BASE = 0x91b3c2d6091d67e1L;
  
     static {
         LCM_FINGERPRINT = _hashRecursive(new ArrayList<Class<?>>());
@@ -50,19 +52,23 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
  
     public void _encodeRecursive(DataOutput outs) throws IOException
     {
-        outs.writeFloat(this.xLidar); 
+        for (int a = 0; a < 3; a++) {
+            outs.writeFloat(this.odomLidar[a]); 
+        }
  
-        outs.writeFloat(this.yLidar); 
- 
-        outs.writeFloat(this.thetaLidar); 
- 
-        outs.writeFloat(this.xSE); 
- 
-        outs.writeFloat(this.ySE); 
- 
-        outs.writeFloat(this.thetaSE); 
+        for (int a = 0; a < 3; a++) {
+            outs.writeFloat(this.odomSE[a]); 
+        }
  
         outs.writeFloat(this.thetaGyro); 
+ 
+        for (int a = 0; a < 3; a++) {
+            outs.writeFloat(this.odomCurrent[a]); 
+        }
+ 
+        for (int a = 0; a < 2; a++) {
+            outs.writeFloat(this.currentWayPoint[a]); 
+        }
  
     }
  
@@ -88,39 +94,43 @@ public final class lcm_monitor_odometer implements lcm.lcm.LCMEncodable
  
     public void _decodeRecursive(DataInput ins) throws IOException
     {
-        this.xLidar = ins.readFloat();
+        this.odomLidar = new float[(int) 3];
+        for (int a = 0; a < 3; a++) {
+            this.odomLidar[a] = ins.readFloat();
+        }
  
-        this.yLidar = ins.readFloat();
- 
-        this.thetaLidar = ins.readFloat();
- 
-        this.xSE = ins.readFloat();
- 
-        this.ySE = ins.readFloat();
- 
-        this.thetaSE = ins.readFloat();
+        this.odomSE = new float[(int) 3];
+        for (int a = 0; a < 3; a++) {
+            this.odomSE[a] = ins.readFloat();
+        }
  
         this.thetaGyro = ins.readFloat();
+ 
+        this.odomCurrent = new float[(int) 3];
+        for (int a = 0; a < 3; a++) {
+            this.odomCurrent[a] = ins.readFloat();
+        }
+ 
+        this.currentWayPoint = new float[(int) 2];
+        for (int a = 0; a < 2; a++) {
+            this.currentWayPoint[a] = ins.readFloat();
+        }
  
     }
  
     public lcmtypes.lcm_monitor_odometer copy()
     {
         lcmtypes.lcm_monitor_odometer outobj = new lcmtypes.lcm_monitor_odometer();
-        outobj.xLidar = this.xLidar;
- 
-        outobj.yLidar = this.yLidar;
- 
-        outobj.thetaLidar = this.thetaLidar;
- 
-        outobj.xSE = this.xSE;
- 
-        outobj.ySE = this.ySE;
- 
-        outobj.thetaSE = this.thetaSE;
- 
+        outobj.odomLidar = new float[(int) 3];
+        System.arraycopy(this.odomLidar, 0, outobj.odomLidar, 0, 3); 
+        outobj.odomSE = new float[(int) 3];
+        System.arraycopy(this.odomSE, 0, outobj.odomSE, 0, 3); 
         outobj.thetaGyro = this.thetaGyro;
  
+        outobj.odomCurrent = new float[(int) 3];
+        System.arraycopy(this.odomCurrent, 0, outobj.odomCurrent, 0, 3); 
+        outobj.currentWayPoint = new float[(int) 2];
+        System.arraycopy(this.currentWayPoint, 0, outobj.currentWayPoint, 0, 2); 
         return outobj;
     }
  
