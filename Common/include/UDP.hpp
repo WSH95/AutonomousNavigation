@@ -95,8 +95,8 @@ public:
         else
             tmpAddr = &targetAddr;
 
-        // 设置超时
-        if (period != 0)
+        // 设置超时 0 means block
+        if (period > 1e-4)
         {
             struct timeval tv;
             tv.tv_sec = (long int) period;
