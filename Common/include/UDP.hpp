@@ -64,6 +64,21 @@ public:
 
         return floatVariable;
     }
+
+    static float ConvertByte2Int(unsigned char *pByte)
+    {
+        int intVariable;
+        unsigned char i;
+        void *pf;
+        pf = &intVariable;
+
+        for (i = 0; i < 4; i++)
+        {
+            *((unsigned char *) pf + i) = *(pByte + i);
+        }
+
+        return intVariable;
+    }
 };
 
 

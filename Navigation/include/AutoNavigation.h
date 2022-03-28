@@ -8,6 +8,7 @@
 #define AUTO_COMMAND_LENGTH 18
 
 #include <unistd.h>
+#include <array>
 #include "ConfigParameters.hpp"
 #include "LockCircleQueue.hpp"
 #include "AStar.hpp"
@@ -76,7 +77,9 @@ public:
 
     void monitorOdometerData();
 
-    void sendMapImage(const std::vector<std::vector<int>> &map_, const std::vector<AStar::arcInfo> &path_);
+    void sendMapImage(const std::vector<std::vector<int>> &map_, const std::vector<AStar::arcInfo> &path_,
+                      const std::array<float, 3> &trans = {0.0, 0.0, 0.0});
+
 private:
     ConfigParameters *cfg;
     bool ifExternCfg;
@@ -157,6 +160,8 @@ private:
 
     timespec l_startTime;
     timespec l_endTime;
+
+    LockCircleQueue<std::vector<std::vector<float>>, 1> pickedPointsList;
 };
 
 #endif //AUTONOMOUS_NAVIGATION_AUTONAVIGATION_H

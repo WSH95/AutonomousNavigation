@@ -26,7 +26,8 @@ task:
   route_follow:
     enable: true # follow a given route if TRUE
 #    points: [ [ 3, 0 ], [ 3, 3 ], [ 0, 3 ], [ 0, 0 ] ]
-    points: [ [ 2, 0 ], [ 0, 0 ], [ 2, 0 ], [ 0, 0 ] ]
+#    points: [ [ 2, 2 ], [ 0, 0 ], [ 2, 0 ], [ 0, 0 ] ]
+    points: [ ]
     distance_threshold: 0.5 # for the middle point
     self_localization_WO_lidar_period: 0.05 # (unit: s)
     self_localization_mode: 1  # 0 -> lidar only
@@ -56,7 +57,7 @@ show:
   map_image: true
 
 monitor:
-  use_lcm: true
+  use_lcm: false
   save_txt: false
 
 #route_following:

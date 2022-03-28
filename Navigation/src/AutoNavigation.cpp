@@ -97,9 +97,10 @@ void AutoNavigation::init()
                                                 [this]
                                                 { selfLocalizationWOLidar(); });
     routePoints = cfg->route_points;
+    pickedPointsList.push(routePoints);
+    udp_sendImg.parsePickedPointsPtr(&pickedPointsList);
     routeTargetThreshold = cfg->route_distance_threshold;
     selfLocalizationQueue.push({0, 0, 0});
-    numRoutePoints = routePoints.size();
 
     clock_gettime(CLOCK_MONOTONIC, &l_startTime);
 }
@@ -407,7 +408,8 @@ void AutoNavigation::getPathCommandGivenRoute()
 //    std::cout << cfg->show_map_image << '\t' << udp_sendImg.sendingImg() << endl;
     if (cfg->show_map_image && udp_sendImg.sendingImg())
     {
-        sendMapImage(newMap.map, path);
+        std::array<float, 3> currentTrans{xCurrent, yCurrent, thetaCurrent};
+        sendMapImage(newMap.map, path, currentTrans);
     }
 /*******************************************************************************************************************/
 }
@@ -552,12 +554,14 @@ void AutoNavigation::getPathCommandGivenRoute_noBlock()
 //    std::cout << cfg->show_map_image << '\t' << udp_sendImg.sendingImg() << endl;
     if (cfg->show_map_image && udp_sendImg.sendingImg())
     {
-        sendMapImage(tmp_map, smooth_path);
+        std::array<float, 3> currentTrans{xCurrent, yCurrent, thetaCurrent};
+        sendMapImage(tmp_map, smooth_path, currentTrans);
     }
 /*******************************************************************************************************************/
 }
 
-void AutoNavigation::sendMapImage(const std::vector<std::vector<int>> &map_, const std::vector<AStar::arcInfo> &path_)
+void AutoNavigation::sendMapImage(const std::vector<std::vector<int>> &map_, const std::vector<AStar::arcInfo> &path_,
+                                  const std::array<float, 3> &trans)
 {
     /************** Send new map info ***************/
     std::vector<uint8_t> newMapInfoBytes;
@@ -579,8 +583,26 @@ void AutoNavigation::sendMapImage(const std::vector<std::vector<int>> &map_, con
     {
         newMapInfoBytes.push_back(tmp[i]);
     }
+    // transform_x
+    tmp = (uint8_t *) (&trans[0]);
+    for (int i = 0; i < 4; i++)
+    {
+        newMapInfoBytes.push_back(tmp[i]);
+    }
+    // transform_y
+    tmp = (uint8_t *) (&trans[1]);
+    for (int i = 0; i < 4; i++)
+    {
+        newMapInfoBytes.push_back(tmp[i]);
+    }
+    // transform_theta
+    tmp = (uint8_t *) (&trans[2]);
+    for (int i = 0; i < 4; i++)
+    {
+        newMapInfoBytes.push_back(tmp[i]);
+    }
 //    std::cout << "height: " << (int)height << "  width: " << (int)width << std::endl;
-    udp_sendImg.SendBack(newMapInfoBytes.data(), 10);
+    udp_sendImg.SendBack(newMapInfoBytes.data(), 22);
 
     /************** Send path bytes ***************/
     std::vector<uint8_t> pathBytes;
@@ -709,6 +731,13 @@ void AutoNavigation::selfLocalizationWOLidar()
 
 void AutoNavigation::calTargetGivenRoute(float xBody_, float yBody_, float theta_, float &xTarget, float &yTarget)
 {
+    if (pickedPointsList.isUPdate())
+    {
+        pickedPointsList.pop_anyway(&routePoints);
+        numRoutePoints = routePoints.size();
+        currentRoutePointIndex = 0;
+    }
+
     if (numRoutePoints == 0)
     {
         xTarget = 0;
@@ -1061,7 +1090,7 @@ void AutoNavigation::udpSend(bool isFirstCmd_, float velX_, float velY_, float t
     if (cfg->get_use_udp())
     {
         udp.Send(sendBuf, AUTO_COMMAND_LENGTH);
-        std::cout << "velX: " << velX_ << "\tvelY: " << velY_ << "\tturnRate: " << turnRate_ << std::endl;
+//        std::cout << "velX: " << velX_ << "\tvelY: " << velY_ << "\tturnRate: " << turnRate_ << std::endl;
     }
 }
 
